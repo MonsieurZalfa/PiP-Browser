@@ -46,7 +46,7 @@ app.whenReady().then(async () => {
     const command = (name, value) => win.webContents.executeJavaScript(`window.pip.command(${JSON.stringify(name)}, ${JSON.stringify(value) ?? 'undefined'})`);
     assert.equal(BrowserWindow.getAllWindows().length, 1, 'startup must open only one window even with two saved windows');
     await command('new');
-    await until(() => BrowserWindow.getAllWindows().length === 2 && BrowserWindow.getAllWindows().every(w => !w.webContents.isLoading() && w.contentView.children[0]?.webContents.getTitle() === 'Lecteur de test'));
+    await until(() => BrowserWindow.getAllWindows().length === 2 && BrowserWindow.getAllWindows().every(w => w.isVisible() && !w.webContents.isLoading() && w.contentView.children[0]?.webContents.getTitle() === 'Lecteur de test'));
     assert.ok(win.isAlwaysOnTop());
     assert.equal(await win.webContents.executeJavaScript("Boolean(document.querySelector('.app-icon').complete && document.querySelector('.app-icon').naturalWidth > 0)"), true, 'the GUI icon must load');
     assert.equal(view.webContents.getLastWebPreferences().nodeIntegration, false);
@@ -61,6 +61,24 @@ app.whenReady().then(async () => {
     await command('opacity', .55);
     assert.ok(Math.abs(win.getOpacity() - .55) < .01);
     assert.equal(BrowserWindow.getAllWindows().find(other => other.id !== win.id).getOpacity(), 1);
+    await command('compact');
+    const beforeHide = BrowserWindow.getAllWindows().map(w => ({ id: w.id, bounds: w.getBounds(), opacity: w.getOpacity(), content: w.contentView.children[0].getBounds() }));
+    await command('visibility');
+    assert.ok(BrowserWindow.getAllWindows().every(w => !w.isVisible()), 'hide command must hide every window without closing them');
+    await command('new');
+    await until(() => BrowserWindow.getAllWindows().length === 3 && BrowserWindow.getAllWindows().every(w => !w.webContents.isLoading() && w.contentView.children[0]?.webContents.getTitle() === 'Lecteur de test'));
+    await delay(100);
+    assert.ok(BrowserWindow.getAllWindows().every(w => !w.isVisible()), 'new windows must respect global hiding');
+    await command('visibility');
+    assert.ok(BrowserWindow.getAllWindows().every(w => w.isVisible()), 'second command must show every window');
+    for (const previous of beforeHide) {
+      const restored = BrowserWindow.fromId(previous.id);
+      assert.deepEqual(restored.getBounds(), previous.bounds, 'visibility must preserve position and size');
+      assert.equal(restored.getOpacity(), previous.opacity, 'visibility must preserve opacity');
+      assert.deepEqual(restored.contentView.children[0].getBounds(), previous.content, 'visibility must preserve compact layout');
+    }
+    BrowserWindow.getAllWindows().find(w => !beforeHide.some(previous => previous.id === w.id)).close();
+    await command('compact');
     await command('opacity', 1);
     assert.ok((await command('navigate', 'file:///C:/Windows')).error);
     const videoWindowSize = win.getSize();
@@ -253,8 +271,17 @@ app.whenReady().then(async () => {
     fs.writeFileSync(path.resolve(__dirname, '../.runtime/prototype.png'), screenshot.toPNG());
     await command('opacity', .3);
     await command('game');
+    await command('visibility');
+    assert.ok(BrowserWindow.getAllWindows().every(w => !w.isVisible()), 'hiding must work in game mode');
+    await command('visibility');
+    assert.ok(BrowserWindow.getAllWindows().every(w => w.isVisible() && !w.isFocusable()), 'showing must preserve game mode');
+    await command('visibility');
     recover();
-    assert.ok(BrowserWindow.getAllWindows().every(w => w.isFocusable() && w.getOpacity() === 1 && w.contentView.children[0].getBounds().y === BAR_HEIGHT));
+    assert.ok(BrowserWindow.getAllWindows().every(w => w.isVisible() && w.isFocusable() && w.getOpacity() === 1 && w.contentView.children[0].getBounds().y === BAR_HEIGHT));
+    await command('visibility');
+    assert.ok(BrowserWindow.getAllWindows().every(w => !w.isVisible()), 'recovery must reset the visibility toggle');
+    await command('visibility');
+    assert.ok(globalShortcut.isRegistered('Ctrl+Alt+H') || globalShortcut.isRegistered('Ctrl+Alt+Shift+H'));
     assert.ok(globalShortcut.isRegistered('Ctrl+Alt+Shift+R') || globalShortcut.isRegistered('Ctrl+Shift+F12'));
     console.log('SMOKE OK: multi-window, isolated web content, 16:9, independent opacity, compact mode, game mode, recovery.');
     app.quit();

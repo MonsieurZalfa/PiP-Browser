@@ -28,6 +28,7 @@ Créer un installateur Windows : `npm run pack`. Version portable : `npm run pac
 - Pour déplacer une fenêtre en mode normal, compact ou vidéo, maintiens le **clic droit dans le contenu** et glisse. Les petits mouvements de souris sont ignorés. Le relâchement après déplacement ne déclenche ni clic ni changement de mode. Le bouton gauche reste entièrement dédié à la page, y compris le maintien pour accélérer une vidéo YouTube. En mode jeu, utilise d’abord **Ctrl+Alt+G** pour reprendre le contrôle de la fenêtre : les clics y traversent la fenêtre vers le jeu.
 - **Compact** masque la barre de commandes. **Ctrl+Alt+B** la réaffiche pour la dernière fenêtre active. Les boutons de taille sont distincts de ce mode.
 - **Jeu** masque les commandes de toutes les fenêtres et laisse passer les clics vers le jeu. **Ctrl+Alt+G** quitte ce mode et restaure les barres précédemment visibles.
+- **Ctrl+Alt+H** masque toutes les fenêtres d'un coup ; un second appui les réaffiche sans modifier leurs positions, tailles, opacités ou modes. Le menu PiP près de l'horloge propose aussi **Masquer / Afficher toutes les fenêtres**. Si le raccourci est occupé, **Ctrl+Alt+Maj+H** est essayé. Les fenêtres restent ouvertes et le son peut continuer. Une fenêtre créée pendant le masquage reste cachée jusqu'au réaffichage. Le masquage n'est pas conservé au redémarrage.
 - **Ctrl+Alt+N** crée une fenêtre ; **Ctrl+Alt+Maj+R** récupère toutes les fenêtres, les replace sur l’écran principal et rétablit l’opacité à 100 %.
 - L’icône **PiP près de l’horloge Windows** propose toutes ces commandes et permet de quitter l’application. Un double-clic sur l’icône récupère les fenêtres. Si un raccourci est occupé, un remplacement est essayé automatiquement : **Ctrl+Maj+F12** pour la récupération, et **Ctrl+Alt+Maj+lettre** pour les autres. Les raccourcis effectivement disponibles sont affichés dans le menu PiP et les infobulles. Aucun avertissement bloquant ne s’ouvre au démarrage.
 - Fermer la dernière fenêtre quitte le logiciel. **Quitter** dans le menu près de l’horloge mémorise les réglages ; seule la première fenêtre enregistrée est rouverte au prochain lancement.
@@ -111,3 +112,10 @@ Lancer **release/PiP-Browser-Setup-0.2.0-x64.exe** pour installer PiP Browser da
 Les mises à jour sont recherchées automatiquement puis téléchargées en arrière-plan. Le bouton **↑** et le menu près de l'horloge permettent une vérification manuelle et proposent le redémarrage lorsqu'une version est prête.
 
 La première version est publiée sur [GitHub Releases](https://github.com/MonsieurZalfa/PiP-Browser/releases/latest). Les mises à jour sont distribuées depuis ce dépôt public. Voir [INSTALLATION.md](INSTALLATION.md) pour l'installation et le workflow de publication.
+
+## Mise à jour 0.2.1
+
+- **Ctrl+Alt+H** masque toutes les fenêtres ; un second appui les réaffiche en conservant leurs positions, tailles, opacités et modes.
+- La commande est aussi disponible dans le menu PiP près de l'horloge. Si le raccourci est occupé, **Ctrl+Alt+Maj+H** est essayé.
+- La récupération des fenêtres réaffiche également les fenêtres masquées. Le masquage n'est pas conservé au redémarrage.
+- Un [guide de contribution](contribution.md) décrit le travail à plusieurs sur le projet.

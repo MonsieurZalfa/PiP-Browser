@@ -8,7 +8,7 @@ const { createUpdateManager } = require('./updates');
 const windows = new Map();
 const shortcuts = {};
 let updateManager;
-let tray, lastActive, saveTimer, quitting = false, gameMode = false;
+let tray, lastActive, saveTimer, quitting = false, gameMode = false, allHidden = false;
 const shellFile = path.join(__dirname, 'index.html');
 const isYoutube = url => { try { return /(^|\.)youtube\.com$/.test(new URL(url).hostname); } catch { return false; } };
 const videoCSS = `
@@ -165,7 +165,18 @@ function setGame(enabled) {
   }
   rebuildMenu();
 }
+function toggleWindows() {
+  allHidden = !allHidden;
+  for (const record of windows.values()) {
+    delete record.moveStart;
+    delete record.resizeStart;
+    if (allHidden) record.win.hide();
+    else record.win.showInactive();
+  }
+  rebuildMenu();
+}
 function recover() {
+  allHidden = false;
   if (gameMode) setGame(false);
   let offset = 0;
   for (const record of windows.values()) {
@@ -179,6 +190,7 @@ function recover() {
     offset += 35;
   }
   scheduleSave();
+  rebuildMenu();
 }
 function targetWindow() { return windows.get(lastActive) || windows.values().next().value; }
 function shortcutLabel(name) { return shortcuts[name] ? ` (${shortcuts[name]})` : ' (menu uniquement)'; }
@@ -187,6 +199,7 @@ function rebuildMenu() {
   tray.setToolTip(`PiP Browser${gameMode ? ' — mode jeu' : ''}`);
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: `Nouvelle fenêtre${shortcutLabel('new')}`, click: () => createWindow() },
+    { label: `${allHidden ? 'Afficher' : 'Masquer'} toutes les fenêtres${shortcutLabel('visibility')}`, click: toggleWindows },
     { label: `Mode jeu — clics traversants${shortcutLabel('game')}`, type: 'checkbox', checked: gameMode, click: () => setGame(!gameMode) },
     { label: `Afficher / masquer les commandes${shortcutLabel('compact')}`, click: () => { const r = targetWindow(); if (r && !gameMode) setCompact(r, !r.state.compact); } },
     { label: `Récupérer toutes les fenêtres${shortcutLabel('recover')}`, click: recover },
@@ -257,7 +270,8 @@ function createWindow(saved) {
   });
   wc.on('render-process-gone', () => dialog.showMessageBox(win, { type: 'error', message: 'Le navigateur de cette fenêtre s’est arrêté.', detail: 'Utilise ↻ pour recharger la page.' }));
   wc.loadURL(state.url).catch(() => {});
-  win.once('ready-to-show', () => { win.show(); win.setAlwaysOnTop(true, 'screen-saver'); update(record); });
+  win.once('ready-to-show', () => { if (!allHidden) win.show(); win.setAlwaysOnTop(true, 'screen-saver'); update(record); });
+  win.on('show', () => { if (allHidden) { allHidden = false; rebuildMenu(); } });
   win.on('focus', () => { lastActive = win.id; win.setAlwaysOnTop(true, 'screen-saver'); });
   wc.on('focus', () => { lastActive = win.id; });
   win.on('resize', () => { layout(record); scheduleSave(); });
@@ -285,6 +299,7 @@ ipcMain.handle('pip:command', async (event, name, value) => {
       case 'back': if (wc.navigationHistory.canGoBack()) wc.navigationHistory.goBack(); break;
       case 'reload': wc.reload(); break;
       case 'new': createWindow(); break;
+      case 'visibility': toggleWindows(); break;
       case 'close': win.close(); break;
       case 'smaller': setWidth(record, record.size.width * .8); break;
       case 'larger': setWidth(record, record.size.width * 1.25); break;
@@ -333,6 +348,7 @@ else {
     tray.on('double-click', recover);
     const bindings = [
       ['new', ['Ctrl+Alt+N', 'Ctrl+Alt+Shift+N'], () => createWindow()],
+      ['visibility', ['Ctrl+Alt+H', 'Ctrl+Alt+Shift+H'], toggleWindows],
       ['game', ['Ctrl+Alt+G', 'Ctrl+Alt+Shift+G'], () => setGame(!gameMode)],
       ['compact', ['Ctrl+Alt+B', 'Ctrl+Alt+Shift+B'], () => { const r = targetWindow(); if (r && !gameMode) setCompact(r, !r.state.compact); }],
       ['recover', ['Ctrl+Alt+Shift+R', 'Ctrl+Shift+F12'], recover],
