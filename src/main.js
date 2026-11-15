@@ -1,13 +1,15 @@
-const { app, BrowserWindow, WebContentsView, ipcMain, globalShortcut, Menu, Tray, screen, dialog, session } = require('electron');
+const { app, BrowserWindow, WebContentsView, ipcMain, globalShortcut, Menu, Tray, screen, dialog, session, shell, safeStorage, clipboard } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { BAR_HEIGHT, FRAME_MARGIN, MIN_WIDTH, normalizeUrl, heightForWidth, constrainResize, sanitizeSavedWindow } = require('./core');
 const { setPlayerMode } = require('./player-mode');
 const { createUpdateManager } = require('./updates');
+const { createSyncManager, createFileStorage } = require('./sync');
+const { parseYoutubeVideo, watchUrl, sanitizeSyncSettings } = require('./sync-core');
 
 const windows = new Map();
 const shortcuts = {};
-let updateManager;
+let updateManager, syncManager, syncWin = null, syncTargetId = null;
 let tray, lastActive, saveTimer, quitting = false, gameMode = false, allHidden = false;
 const shellFile = path.join(__dirname, 'index.html');
 const isYoutube = url => { try { return /(^|\.)youtube\.com$/.test(new URL(url).hostname); } catch { return false; } };
@@ -53,6 +55,7 @@ function update(record) {
     youtube: isYoutube(wc.getURL()),
     shortcuts,
     updates: updateManager?.state,
+    sync: { enabled: Boolean(syncManager?.state.enabled), active: record.win.id === syncTargetId, inRoom: Boolean(syncManager?.state.room) },
   });
 }
 function layout(record) {
@@ -203,6 +206,7 @@ function rebuildMenu() {
     { label: `Mode jeu — clics traversants${shortcutLabel('game')}`, type: 'checkbox', checked: gameMode, click: () => setGame(!gameMode) },
     { label: `Afficher / masquer les commandes${shortcutLabel('compact')}`, click: () => { const r = targetWindow(); if (r && !gameMode) setCompact(r, !r.state.compact); } },
     { label: `Récupérer toutes les fenêtres${shortcutLabel('recover')}`, click: recover },
+    { label: 'Synchro guilde…', click: () => openSync(targetWindow()) },
     { type: 'separator' },
     ...[...windows.values()].map(record => ({ label: (record.view.webContents.getTitle() || 'YouTube').slice(0, 70), click: () => {
       if (gameMode) setGame(false);
@@ -215,6 +219,100 @@ function rebuildMenu() {
     { type: 'separator' },
     { label: 'Quitter', click: () => app.quit() },
   ]));
+}
+
+// Guild synchronisation ---------------------------------------------------------
+function syncPath(name) { return path.join(app.getPath('userData'), name); }
+function syncConfig() {
+  const packaged = require('../package.json').pipSync || {};
+  return {
+    supabaseUrl: process.env.PIP_SYNC_SUPABASE_URL || packaged.supabaseUrl || '',
+    supabaseKey: process.env.PIP_SYNC_SUPABASE_KEY || packaged.supabaseKey || '',
+  };
+}
+function syncRecord() { return windows.get(syncTargetId) || null; }
+function windowSyncInfo() {
+  const record = syncRecord();
+  if (!record) return null;
+  const wc = record.view.webContents;
+  const videoId = parseYoutubeVideo(wc.getURL());
+  const roomVideo = syncManager?.state.room?.videoId;
+  return { title: (wc.getTitle() || 'Fenêtre PiP').slice(0, 80), videoId, outOfSync: Boolean(roomVideo) && videoId !== roomVideo };
+}
+function sendSyncState() {
+  if (!syncManager) return;
+  if (syncWin && !syncWin.isDestroyed()) syncWin.webContents.send('pip:sync-state', { ...syncManager.state, window: windowSyncInfo() });
+  for (const record of windows.values()) update(record);
+}
+// Applies the room state to the synced window. The window only follows a
+// change of room video: if its user browses elsewhere, it stays there until
+// « Revenir au salon ».
+function applySyncTarget(target, force = false) {
+  const record = syncRecord();
+  if (!record) { sendSyncState(); return; }
+  const wc = record.view.webContents;
+  if (!target?.videoId) { record.syncVideo = null; wc.send('pip:sync-apply', null); sendSyncState(); return; }
+  if (force || target.videoId !== record.syncVideo) {
+    record.syncVideo = target.videoId;
+    if (parseYoutubeVideo(wc.getURL()) !== target.videoId) {
+      wc.loadURL(watchUrl(target.videoId)).catch(() => {});
+      sendSyncState();
+      return; // did-finish-load sends the target to the new page.
+    }
+  }
+  wc.send('pip:sync-apply', target);
+  sendSyncState();
+}
+function sendSyncTarget(record) {
+  if (record.win.id !== syncTargetId || !syncManager) return;
+  record.view.webContents.send('pip:sync-apply', syncManager.target());
+}
+function attachSync(record) {
+  if (!record || record.win.id === syncTargetId) return;
+  const previous = syncRecord();
+  if (previous) { previous.view.webContents.send('pip:sync-apply', null); previous.syncVideo = null; }
+  syncTargetId = record.win.id;
+  applySyncTarget(syncManager?.target());
+}
+function openSync(record) {
+  if (record) attachSync(record);
+  if (syncWin && !syncWin.isDestroyed()) { syncWin.show(); syncWin.focus(); sendSyncState(); return; }
+  const anchor = record?.win.getBounds();
+  const work = screen.getDisplayMatching(anchor || screen.getPrimaryDisplay().workArea).workArea;
+  const x = anchor ? Math.min(anchor.x + anchor.width + 8, work.x + work.width - 380) : undefined;
+  syncWin = new BrowserWindow({
+    icon: path.join(__dirname, '../assets/icon.ico'), title: 'Synchro guilde — PiP Browser',
+    width: 380, height: 620, minWidth: 320, minHeight: 360, alwaysOnTop: true, autoHideMenuBar: true,
+    ...(anchor ? { x, y: Math.max(work.y, anchor.y) } : {}),
+    backgroundColor: '#10151e', maximizable: false, fullscreenable: false,
+    webPreferences: { preload: path.join(__dirname, 'sync-preload.js'), nodeIntegration: false, contextIsolation: true, sandbox: true },
+  });
+  syncWin.setAlwaysOnTop(true, 'screen-saver');
+  syncWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  syncWin.webContents.on('will-navigate', event => event.preventDefault());
+  syncWin.on('closed', () => { syncWin = null; });
+  syncWin.loadFile(path.join(__dirname, 'sync.html'));
+}
+function setupSync() {
+  const settingsFile = syncPath('sync.json');
+  let settings;
+  try { settings = sanitizeSyncSettings(JSON.parse(fs.readFileSync(settingsFile, 'utf8'))); } catch { settings = sanitizeSyncSettings(); }
+  const config = syncConfig();
+  syncManager = createSyncManager({
+    createClient: require('@supabase/supabase-js').createClient,
+    config,
+    authStorage: createFileStorage(syncPath('sync-session.bin'), safeStorage),
+    settings,
+    saveSettings: next => { try { fs.writeFileSync(settingsFile, JSON.stringify(next, null, 2)); } catch (error) { console.error('Synchro :', error.message); } },
+    openExternal: url => {
+      // Only the sign-in page of the configured Supabase project may be opened.
+      if (new URL(url).origin !== new URL(config.supabaseUrl).origin) throw new Error('Adresse de connexion inattendue.');
+      return shell.openExternal(url);
+    },
+    onChange: sendSyncState,
+    onRoomState: target => applySyncTarget(target),
+  });
+  syncManager.start();
 }
 
 function createWindow(saved) {
@@ -260,9 +358,11 @@ function createWindow(saved) {
     return { action: 'deny' };
   });
   for (const event of ['did-navigate', 'did-navigate-in-page', 'did-stop-loading']) wc.on(event, () => { update(record); scheduleSave(); });
-  wc.on('page-title-updated', () => { update(record); rebuildMenu(); });
+  wc.on('page-title-updated', () => { update(record); rebuildMenu(); if (win.id === syncTargetId) sendSyncState(); });
+  wc.on('did-navigate-in-page', (_event, _url, isMainFrame) => { if (isMainFrame && win.id === syncTargetId) { sendSyncTarget(record); sendSyncState(); } });
   wc.on('did-finish-load', () => {
     record.cssKey = null;
+    if (win.id === syncTargetId) sendSyncTarget(record);
     if (record.state.videoOnly) applyVideo(record).catch(error => console.warn('Mode vidéo :', error.message));
   });
   wc.on('did-fail-load', (_event, code, description, url, isMainFrame) => {
@@ -278,6 +378,7 @@ function createWindow(saved) {
   win.on('move', scheduleSave);
   win.on('closed', () => {
     windows.delete(win.id);
+    if (syncTargetId === win.id) { syncTargetId = null; sendSyncState(); }
     if (!wc.isDestroyed()) wc.close();
     if (!quitting && windows.size === 0) app.quit();
     else if (!quitting) { scheduleSave(); rebuildMenu(); }
@@ -300,6 +401,7 @@ ipcMain.handle('pip:command', async (event, name, value) => {
       case 'reload': wc.reload(); break;
       case 'new': createWindow(); break;
       case 'visibility': toggleWindows(); break;
+      case 'sync': openSync(record); break;
       case 'close': win.close(); break;
       case 'smaller': setWidth(record, record.size.width * .8); break;
       case 'larger': setWidth(record, record.size.width * 1.25); break;
@@ -336,6 +438,46 @@ ipcMain.on('pip:surface-drag', (event, phase, point) => {
   else if (phase === 'toggle') toggleVideoCompact(record).catch(error => console.warn('Double clic droit :', error.message));
 });
 
+ipcMain.handle('pip:sync-command', async (event, name, value) => {
+  if (!syncWin || syncWin.isDestroyed() || event.sender !== syncWin.webContents || event.senderFrame !== syncWin.webContents.mainFrame || !syncManager) return;
+  const text = typeof value === 'string' ? value.slice(0, 2048) : '';
+  switch (name) {
+    case 'ready': break;
+    case 'enable': await syncManager.setEnabled(value === true); break;
+    case 'sign-in': await syncManager.signIn(); break;
+    case 'sign-out': await syncManager.signOut(); break;
+    case 'retry': await syncManager.retry(); break;
+    case 'refresh-rooms': await syncManager.refreshRooms(); break;
+    case 'create-room': if (!syncRecord()) attachSync(targetWindow()); await syncManager.createRoom(text); break;
+    case 'join-room': if (!syncRecord()) attachSync(targetWindow()); await syncManager.joinRoom(text); break;
+    case 'leave-room': await syncManager.leaveRoom(); break;
+    case 'enqueue': await syncManager.enqueue(text); break;
+    case 'remove-item': await syncManager.removeItem(value); break;
+    case 'play-item': await syncManager.playItem(value); break;
+    case 'next': await syncManager.next(); break;
+    case 'copy-code': if (syncManager.state.room) clipboard.writeText(syncManager.state.room.id); break;
+    case 'resync': applySyncTarget(syncManager.target(), true); break;
+    case 'share': {
+      const record = syncRecord();
+      const videoId = record && parseYoutubeVideo(record.view.webContents.getURL());
+      if (!videoId) break;
+      const [time, playing] = await record.view.webContents.executeJavaScript(
+        "(() => { const v = document.querySelector('#movie_player video'); return v ? [v.currentTime, !v.paused] : [0, true]; })()",
+      ).catch(() => [0, true]);
+      record.syncVideo = videoId;
+      await syncManager.shareVideo(videoId, Number.isFinite(time) ? time : 0, playing === true);
+      break;
+    }
+  }
+  sendSyncState();
+});
+
+ipcMain.on('pip:sync-media', (event, report) => {
+  const record = syncRecord();
+  if (!record || event.sender !== record.view.webContents || event.senderFrame !== record.view.webContents.mainFrame) return;
+  syncManager?.handleMedia(report);
+});
+
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', recover);
@@ -363,12 +505,13 @@ else {
       onChange: () => { for (const record of windows.values()) update(record); rebuildMenu(); },
     });
     updateManager.start();
+    setupSync();
     let saved;
     try { saved = JSON.parse(fs.readFileSync(statePath(), 'utf8')); } catch {}
     createWindow(Array.isArray(saved) ? saved[0] : undefined);
   });
   app.on('before-quit', () => { if (!quitting) persist(); quitting = true; clearTimeout(saveTimer); });
-  app.on('will-quit', () => { updateManager?.dispose(); globalShortcut.unregisterAll(); });
+  app.on('will-quit', () => { updateManager?.dispose(); syncManager?.dispose(); globalShortcut.unregisterAll(); });
   app.on('window-all-closed', () => app.quit());
 }
 

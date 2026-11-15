@@ -32,6 +32,9 @@ Lire aussi le [README](README.md), les [vérifications](VERIFICATION.md) et les 
 | `src/surface-preload.js` | Gestion des gestes dans le contenu des pages. |
 | `src/player-mode.js` | Comportement du mode vidéo. |
 | `src/updates.js` | Gestion des mises à jour. |
+| `src/sync.js`, `src/sync-core.js` | Synchro guilde : connexion Discord via Supabase, salons, lecture partagée et liste d'attente (voir [SYNCHRO.md](SYNCHRO.md)). |
+| `src/sync.html`, `src/sync.css`, `src/sync-renderer.js`, `src/sync-preload.js` | Panneau de la synchro guilde. |
+| `supabase/` | Schéma SQL et fonction Edge `verify-guild` du serveur de synchro. |
 | `test/` | Tests automatisés, scénario Electron et ressources locales de test. |
 | `assets/`, `scripts/build-icons.ps1` | Icônes et script de génération. |
 | `.github/workflows/release.yml` | Compilation et publication Windows lors d'un push de tag `v*`. |
@@ -95,11 +98,13 @@ Pour un changement de code, exécuter :
 npm test
 npm run check
 npm run test:smoke
+npm run test:sync-smoke
 ```
 
 - `npm test` exécute les tests Node.js.
 - `npm run check` vérifie la syntaxe des modules listés dans le script de `package.json` ; ce n'est pas un linter complet.
 - `npm run test:smoke` ouvre de vraies fenêtres Electron avec des pages locales et un profil isolé dans `.runtime`. Il ne valide pas la lecture YouTube réelle.
+- `npm run test:sync-smoke` vérifie la synchro guilde dans Electron, sans réseau : pilotage du lecteur sur une page locale et panneau Synchro.
 
 Compléter avec les essais manuels pertinents dans [VERIFICATION.md](VERIFICATION.md). Pour les changements de fenêtres ou de gestes, vérifier notamment le déplacement, le redimensionnement, les modes compact/vidéo/jeu, la récupération au clavier et la restauration au redémarrage. Pour le lecteur, tester aussi une vraie page YouTube.
 

@@ -8,7 +8,8 @@
     "start": "electron .",
     "test": "node --test test/*.test.js",
     "test:smoke": "electron test/smoke.cjs",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/renderer.js && node --check src/player-mode.js && node --check src/surface-preload.js && node --check src/updates.js",
+    "test:sync-smoke": "electron test/sync-smoke.cjs",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/renderer.js && node --check src/player-mode.js && node --check src/surface-preload.js && node --check src/updates.js && node --check src/sync.js && node --check src/sync-core.js && node --check src/sync-preload.js && node --check src/sync-renderer.js",
     "pack": "electron-builder --win nsis --publish never",
     "pack:portable": "electron-builder --win portable --publish never"
   },
@@ -64,10 +65,15 @@
     ]
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
     "electron-updater": "^6.8.11"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/MonsieurZalfa/PiP-Browser.git"
+  },
+  "pipSync": {
+    "supabaseUrl": "https://dfpixegldvhvldziptux.supabase.co",
+    "supabaseKey": "sb_publishable_ooVIBEWWC1Z0dzutbq6uCA_d-Vwbtql"
   }
 }
