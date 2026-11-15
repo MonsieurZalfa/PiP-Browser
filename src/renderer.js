@@ -9,7 +9,7 @@ const command = async (name, value) => {
 };
 $('address-form').addEventListener('submit', event => { event.preventDefault(); command('navigate', $('address').value); });
 $('address').addEventListener('input', () => $('address').setCustomValidity(''));
-for (const name of ['back', 'reload', 'new', 'close', 'video', 'compact', 'game', 'smaller', 'larger', 'reset-size', 'updates']) {
+for (const name of ['back', 'reload', 'new', 'close', 'video', 'compact', 'game', 'smaller', 'larger', 'reset-size', 'updates', 'sync']) {
   $(name).addEventListener('click', () => command(name));
 }
 for (const handle of document.querySelectorAll('[data-edge]')) {
@@ -67,6 +67,8 @@ window.pip.onState(state => {
   $('updates').disabled = !updates?.enabled || ['checking', 'downloading'].includes(updates?.status);
   $('updates').textContent = updates?.status === 'downloaded' ? '↻' : '↑';
   $('updates').title = !updates?.enabled ? 'Mises à jour disponibles dans l’application installée' : updates.status === 'downloaded' ? 'Redémarrer pour installer la version ' + updates.version : updates.status === 'downloading' ? 'Téléchargement : ' + updates.progress + ' %' : 'Vérifier les mises à jour';
+  $('sync').setAttribute('aria-pressed', String(Boolean(state.sync?.active && state.sync?.inRoom)));
+  $('sync').title = state.sync?.active ? (state.sync.inRoom ? 'Fenêtre synchronisée avec le salon · ouvrir le panneau Synchro' : 'Fenêtre choisie pour la synchro · ouvrir le panneau Synchro') : 'Synchro guilde : regarder la même vidéo que les autres membres';
   document.title = state.title ? `${state.title} — PiP Browser` : 'PiP Browser';
 });
 command('ready');

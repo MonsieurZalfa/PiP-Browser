@@ -1,0 +1,37 @@
+:root { color-scheme: dark; font: 13px 'Segoe UI', sans-serif; background: #10151e; color: #e8eef8; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 12px 14px 18px; }
+header { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid #334158; }
+h1 { font-size: 15px; margin: 0; flex: 1; color: #83d7c3; }
+h2 { font-size: 12px; margin: 14px 0 6px; color: #a6b9d3; text-transform: uppercase; letter-spacing: .04em; flex: 1; }
+.app-icon { width: 22px; height: 22px; }
+.switch { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.switch input { accent-color: #83d7c3; width: 16px; height: 16px; }
+p { line-height: 1.45; }
+.hint { color: #92a5bd; font-size: 12px; }
+#message:empty { display: none; }
+#message { background: #3a2b1a; border: 1px solid #7a5a2c; border-radius: 6px; padding: 7px 9px; color: #f3d9a8; }
+.row { display: flex; align-items: center; gap: 6px; margin: 8px 0; }
+.row input { flex: 1; min-width: 0; }
+.identity { justify-content: space-between; }
+button { border: 1px solid #344056; background: #202b3c; color: #e8eef8; border-radius: 6px; padding: 6px 9px; cursor: pointer; white-space: nowrap; font: inherit; }
+button:hover { background: #344762; }
+button:disabled { opacity: .4; cursor: default; }
+button.primary { background: #27594f; border-color: #83d7c3; width: 100%; padding: 9px; }
+button.link { background: none; border: 0; color: #83d7c3; padding: 2px 0; text-decoration: underline; }
+button:focus-visible, input:focus-visible { outline: 2px solid #83d7c3; }
+input { border: 1px solid #344056; border-radius: 6px; padding: 7px; color: #dfe9fa; background: #0e1420; font: inherit; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+ol.list { counter-reset: queue; }
+.list li { display: flex; align-items: center; gap: 6px; background: #141b27; border: 1px solid #263246; border-radius: 6px; padding: 6px 8px; }
+ol.list li::before { counter-increment: queue; content: counter(queue); color: #92a5bd; min-width: 16px; font-variant-numeric: tabular-nums; }
+.list .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list .by { color: #92a5bd; font-size: 11px; }
+.list button { padding: 3px 7px; }
+.list:empty::after { content: attr(data-empty); color: #92a5bd; font-size: 12px; }
+.now { background: #141b27; border: 1px solid #334158; border-radius: 8px; padding: 9px 10px; margin-top: 8px; }
+.now .label { color: #83d7c3; font-size: 11px; text-transform: uppercase; }
+#now-title { font-weight: 600; margin: 3px 0; overflow-wrap: anywhere; }
+#window-info.warn { color: #f3d9a8; }
+#leave { margin-top: 10px; }
+#room-name-title { text-transform: none; letter-spacing: 0; font-size: 15px; color: #e8eef8; margin: 6px 0; overflow-wrap: anywhere; }

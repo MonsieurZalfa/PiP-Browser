@@ -31,6 +31,7 @@ Créer un installateur Windows : `npm run pack`. Version portable : `npm run pac
 - **Ctrl+Alt+H** masque toutes les fenêtres d'un coup ; un second appui les réaffiche sans modifier leurs positions, tailles, opacités ou modes. Le menu PiP près de l'horloge propose aussi **Masquer / Afficher toutes les fenêtres**. Si le raccourci est occupé, **Ctrl+Alt+Maj+H** est essayé. Les fenêtres restent ouvertes et le son peut continuer. Une fenêtre créée pendant le masquage reste cachée jusqu'au réaffichage. Le masquage n'est pas conservé au redémarrage.
 - **Ctrl+Alt+N** crée une fenêtre ; **Ctrl+Alt+Maj+R** récupère toutes les fenêtres, les replace sur l’écran principal et rétablit l’opacité à 100 %.
 - L’icône **PiP près de l’horloge Windows** propose toutes ces commandes et permet de quitter l’application. Un double-clic sur l’icône récupère les fenêtres. Si un raccourci est occupé, un remplacement est essayé automatiquement : **Ctrl+Maj+F12** pour la récupération, et **Ctrl+Alt+Maj+lettre** pour les autres. Les raccourcis effectivement disponibles sont affichés dans le menu PiP et les infobulles. Aucun avertissement bloquant ne s’ouvre au démarrage.
+- **Synchro** ouvre la synchro guilde : regarder la même vidéo YouTube que les autres membres de la guilde, avec une liste d'attente commune et une connexion Discord, sans compte à créer. L'option est désactivée par défaut. Voir [SYNCHRO.md](SYNCHRO.md).
 - Fermer la dernière fenêtre quitte le logiciel. **Quitter** dans le menu près de l’horloge mémorise les réglages ; seule la première fenêtre enregistrée est rouverte au prochain lancement.
 
 Positions, tailles, adresses et opacités sont stockées dans `windows.json` dans le dossier de données Electron de l’application. Les cookies sont conservés dans le profil `persist:browsing`, commun aux fenêtres. Les positions sont des positions de fenêtres, pas les positions de lecture des vidéos. Le mode jeu est désactivé à chaque lancement pour permettre de reprendre le contrôle.
@@ -47,6 +48,7 @@ Le navigateur refuse les téléchargements et les permissions caméra, microphon
 npm test
 npm run check
 npm run test:smoke
+npm run test:sync-smoke
 ```
 
 Essais manuels : deux lectures simultanées ; redimensionnement sur les huit bords/coins ; opacité indépendante ; clics transmis au jeu puis récupération au clavier et par l’icône ; fermeture et restauration de session ; déplacement entre écrans ; lecture après navigation ou rechargement.

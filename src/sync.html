@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'">
+  <title>Synchro guilde — PiP Browser</title>
+  <link rel="stylesheet" href="sync.css">
+</head>
+<body>
+  <header>
+    <img class="app-icon" src="../assets/icon.svg" alt="">
+    <h1>Synchro guilde</h1>
+    <label class="switch" title="Aucune connexion n'est établie tant que l'option est désactivée">
+      <input id="enabled" type="checkbox"> Activer
+    </label>
+  </header>
+
+  <p id="message" role="status"></p>
+
+  <section id="off" hidden>
+    <p>Regarde la même vidéo en même temps que les autres membres de la guilde, avec une liste d'attente commune.</p>
+    <p class="hint">Active l'option pour te connecter. Aucune connexion n'est établie tant qu'elle est désactivée.</p>
+  </section>
+
+  <section id="unconfigured" hidden>
+    <p>Cette version de PiP Browser n'est pas reliée à un serveur de synchronisation.</p>
+  </section>
+
+  <section id="signed-out" hidden>
+    <p>Pas de compte à créer : connecte-toi avec Discord. Seuls les membres du serveur de la guilde peuvent se brancher.</p>
+    <button id="sign-in" class="primary">Se connecter avec Discord</button>
+  </section>
+
+  <section id="busy" hidden><p id="busy-text">Connexion…</p></section>
+
+  <section id="not-member" hidden>
+    <p>Vérifie que tu es sur le serveur Discord de la guilde avec un rôle autorisé, puis réessaie.</p>
+    <div class="row"><button id="retry">Réessayer</button><button id="sign-out-member">Changer de compte</button></div>
+  </section>
+
+  <section id="lobby" hidden>
+    <div class="row identity"><span>Connecté : <strong id="user-name"></strong></span><button id="sign-out" class="link">Se déconnecter</button></div>
+    <form id="join-form" class="row">
+      <input id="join-code" placeholder="Code du salon" maxlength="7" autocomplete="off" spellcheck="false" aria-label="Code du salon">
+      <button type="submit">Rejoindre</button>
+    </form>
+    <form id="create-form" class="row">
+      <input id="room-name" placeholder="Nom du nouveau salon" maxlength="60" aria-label="Nom du nouveau salon">
+      <button type="submit">Créer</button>
+    </form>
+    <div class="row"><h2>Salons récents</h2><button id="refresh-rooms" class="link">Actualiser</button></div>
+    <ul id="rooms" class="list"></ul>
+  </section>
+
+  <section id="room" hidden>
+    <div class="row"><h2 id="room-name-title"></h2><button id="copy-code" title="Copier le code à partager">Code : <strong id="room-code"></strong></button></div>
+    <div class="now">
+      <div class="label">En cours</div>
+      <div id="now-title">Aucune vidéo</div>
+      <div id="window-info" class="hint"></div>
+      <div class="row">
+        <button id="resync" title="Revenir à la vidéo et à la position du salon">Revenir au salon</button>
+        <button id="share" title="Faire regarder à tout le salon la vidéo ouverte dans la fenêtre synchronisée">Partager ma vidéo</button>
+        <button id="next" title="Passer à la vidéo suivante de la liste">Suivante ⏭</button>
+      </div>
+    </div>
+    <form id="queue-form" class="row">
+      <input id="queue-url" placeholder="Adresse d'une vidéo YouTube" spellcheck="false" aria-label="Adresse d'une vidéo YouTube à ajouter">
+      <button type="submit">Ajouter</button>
+    </form>
+    <h2>Liste d'attente <span id="queue-count" class="hint"></span></h2>
+    <ol id="queue" class="list"></ol>
+    <h2>Dans le salon</h2>
+    <p id="viewers" class="hint"></p>
+    <button id="leave" class="link">Quitter le salon</button>
+  </section>
+  <script src="sync-renderer.js"></script>
+</body>
+</html>
