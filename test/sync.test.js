@@ -154,8 +154,11 @@ test('the waiting list starts playback for everyone and advances once at the end
   assert.equal(manager.state.room.videoId, VIDEO_A);
   assert.equal(manager.state.room.title, 'Une vidéo');
   assert.equal(targets.at(-1).playing, true);
+  // Adding a video while another plays queues it without interrupting the room.
   await manager.enqueue(`https://www.youtube.com/watch?v=${VIDEO_B}`);
   assert.equal(manager.state.queue.length, 1);
+  assert.equal(manager.state.room.videoId, VIDEO_A);
+  assert.equal(db.calls.filter(([name]) => name === 'set_playback').length, 0);
 
   // Two members finishing the same video advance the list only once.
   manager.handleMedia({ type: 'ended', time: 200, videoId: VIDEO_A });
@@ -177,20 +180,20 @@ test('local pause is shared, echoes and stale events are ignored', async () => {
   manager.start();
   await settle(); await settle();
   await manager.createRoom('Salon');
-  await manager.shareVideo(VIDEO_A, 30, true);
+  await manager.enqueue(`https://youtu.be/${VIDEO_A}`); // starts at 0 s
   assert.equal(targets.at(-1).videoId, VIDEO_A);
 
   advance(5000);
-  // Same state as the room (playing at ~35 s): nothing is sent.
+  // Same state as the room (playing at ~5 s): nothing is sent.
   const sent = db.calls.filter(([name]) => name === 'set_playback').length;
-  manager.handleMedia({ type: 'play', time: 35.2, videoId: VIDEO_A, playing: true });
+  manager.handleMedia({ type: 'play', time: 5.2, videoId: VIDEO_A, playing: true });
   await wait(300);
   assert.equal(db.calls.filter(([name]) => name === 'set_playback').length, sent);
 
-  manager.handleMedia({ type: 'pause', time: 35.4, videoId: VIDEO_A, playing: false });
+  manager.handleMedia({ type: 'pause', time: 5.4, videoId: VIDEO_A, playing: false });
   await wait(300);
   const last = db.calls.filter(([name]) => name === 'set_playback').at(-1)[1];
-  assert.deepEqual([last.p_playing, last.p_position], [false, 35.4]);
+  assert.deepEqual([last.p_playing, last.p_position], [false, 5.4]);
   assert.equal(manager.state.room.playing, false);
 
   // An older realtime update arriving late must not resume playback.

@@ -30,6 +30,9 @@ ol.list li::before { counter-increment: queue; content: counter(queue); color: #
 .list button { padding: 3px 7px; }
 .list:empty::after { content: attr(data-empty); color: #92a5bd; font-size: 12px; }
 .now { background: #141b27; border: 1px solid #334158; border-radius: 8px; padding: 9px 10px; margin-top: 8px; }
+/* The buttons go to the next line instead of overflowing a narrow panel. */
+.now .actions { flex-wrap: wrap; }
+.now .actions button { flex: 1 1 auto; }
 .now .label { color: #83d7c3; font-size: 11px; text-transform: uppercase; }
 #now-title { font-weight: 600; margin: 3px 0; overflow-wrap: anywhere; }
 #window-info.warn { color: #f3d9a8; }

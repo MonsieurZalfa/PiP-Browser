@@ -93,7 +93,8 @@ app.whenReady().then(async () => {
     // Sync panel: renders states sent by the main process, with no Node access.
     const commands = [];
     ipcMain.handle('pip:sync-command', (_event, name, value) => { commands.push([name, value]); });
-    const panel = new BrowserWindow({ width: 380, height: 620, show: true, webPreferences: {
+    // Narrower than the real panel allows: nothing may overflow it.
+    const panel = new BrowserWindow({ width: 300, height: 620, useContentSize: true, show: true, webPreferences: {
       preload: path.join(__dirname, '../src/sync-preload.js'), sandbox: true, contextIsolation: true,
     } });
     await panel.loadFile(path.join(__dirname, '../src/sync.html'));
@@ -119,6 +120,20 @@ app.whenReady().then(async () => {
     assert.equal(await ui("document.querySelectorAll('#queue li')[1].querySelectorAll('button').length"), 1, 'others’ items cannot be removed');
     assert.equal(await ui("document.getElementById('viewers').textContent"), 'Aria, Zalfa');
     assert.equal(await ui("document.getElementById('share').disabled"), true, 'the room video is already shared');
+    assert.equal(await ui("[...document.querySelectorAll('.now button')].every(b => b.getBoundingClientRect().right <= document.documentElement.clientWidth)"), true, 'room buttons must stay inside the panel');
+    assert.equal(await ui("document.documentElement.scrollWidth <= document.documentElement.clientWidth"), true, 'the panel must not scroll sideways');
+    panel.webContents.send('pip:sync-state', { ...base,
+      room: { id: 'ABC234', name: 'Soirée', videoId: VIDEO, title: 'Une vidéo', playing: true, mine: false },
+      queue: [{ id: 7, video_id: 'aqz-KE-bpKQ', title: 'Suivante', added_by_name: 'Aria', mine: true }],
+      viewers: [], window: { title: 'Autre', videoId: 'aqz-KE-bpKQ', outOfSync: true } });
+    await until(() => ui("document.querySelectorAll('#queue li').length === 1"), 'queue update');
+    assert.equal(await ui("document.getElementById('share').disabled"), true, 'a queued video cannot be added twice');
+    panel.webContents.send('pip:sync-state', { ...base,
+      room: { id: 'ABC234', name: 'Soirée', videoId: VIDEO, title: 'Une vidéo', playing: true, mine: false },
+      queue: [{ id: 7, video_id: 'aqz-KE-bpKQ', title: 'Suivante', added_by_name: 'Aria', mine: true }, { id: 8, title: 'Autre', added_by_name: 'Bob', mine: false }],
+      viewers: ['Aria', 'Zalfa'], window: { title: 'Lecteur', videoId: 'M7lc1UVf-VE', outOfSync: true } });
+    await until(() => ui("document.querySelectorAll('#queue li').length === 2"), 'queue restored');
+    assert.equal(await ui("document.getElementById('share').disabled"), false, 'another video can be added to the list');
     await ui("document.getElementById('queue-url').value = 'https://youtu.be/aqz-KE-bpKQ'; document.getElementById('queue-form').requestSubmit()");
     await ui("document.querySelector('#queue li button').click()");
     await delay(200);

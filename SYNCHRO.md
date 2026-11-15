@@ -16,7 +16,7 @@ Dans un salon :
 - Lecture, pause et déplacement dans la vidéo sont partagés avec tout le salon. Chacun peut piloter la lecture.
 - À la fin d'une vidéo, la suivante de la liste démarre automatiquement, une seule fois même si plusieurs membres terminent en même temps. **Suivante ⏭** passe directement à la vidéo suivante.
 - **▶** dans la liste lance une vidéo tout de suite pour tout le monde. **✕** la retire de la liste : c'est possible pour la personne qui l'a ajoutée et pour la personne qui a créé le salon.
-- **Partager ma vidéo** fait regarder à tout le salon la vidéo ouverte dans la fenêtre synchronisée, à sa position actuelle.
+- **Ajouter ma vidéo** met dans la liste d'attente la vidéo ouverte dans la fenêtre synchronisée, sans interrompre la vidéo en cours. Si rien n'est en cours, elle démarre tout de suite pour tout le monde.
 - Si tu navigues ailleurs dans la fenêtre synchronisée, le salon ne te suit pas et tu n'es plus synchronisé. **Revenir au salon** te ramène à la vidéo et à la position du salon. Quand le salon passe à une nouvelle vidéo, la fenêtre l'ouvre automatiquement.
 - Le panneau affiche qui est présent dans le salon.
 - Un écart de plus de 2 secondes avec le salon est corrigé automatiquement.
