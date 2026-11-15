@@ -1,6 +1,10 @@
 # PiP Browser
 
-Prototype Windows de navigateur flottant basé sur Electron. Une seule fenêtre s’ouvre au démarrage, sur la première page mémorisée ou sur YouTube au premier lancement. Le bouton **＋** permet ensuite d’en ouvrir d’autres.
+**PiP Browser est un navigateur Windows conçu pour regarder des vidéos en picture-in-picture pendant que l’on travaille ou joue aux jeux vidéo.**
+
+Il affiche les vidéos dans des fenêtres flottantes qui restent au premier plan, au-dessus des autres applications. On peut ainsi suivre un tutoriel tout en utilisant un logiciel, ou regarder une vidéo pendant une partie, en gardant son activité principale à l’écran. La taille des fenêtres et leur opacité sont réglables pour adapter l’affichage à son espace de travail ou de jeu.
+
+Une seule fenêtre s’ouvre au démarrage, sur la première page mémorisée ou sur YouTube au premier lancement. Le bouton **＋** permet ensuite d’en ouvrir d’autres.
 
 ## Lancer
 
