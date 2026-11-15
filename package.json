@@ -1,6 +1,6 @@
 {
   "name": "pip-browser",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "private": true,
   "description": "Mini navigateur flottant pour Windows",
   "main": "src/main.js",
@@ -8,8 +8,9 @@
     "start": "electron .",
     "test": "node --test test/*.test.js",
     "test:smoke": "electron test/smoke.cjs",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/renderer.js && node --check src/player-mode.js && node --check src/surface-preload.js",
-    "pack": "electron-builder --win portable"
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/renderer.js && node --check src/player-mode.js && node --check src/surface-preload.js && node --check src/updates.js",
+    "pack": "electron-builder --win nsis --publish never",
+    "pack:portable": "electron-builder --win portable --publish never"
   },
   "devDependencies": {
     "electron": "^45.3.2",
@@ -25,10 +26,48 @@
     ],
     "win": {
       "icon": "assets/icon.ico",
-      "target": "portable"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     },
     "directories": {
       "output": "release"
-    }
+    },
+    "artifactName": "PiP-Browser-Setup-${version}-${arch}.${ext}",
+    "portable": {
+      "artifactName": "PiP-Browser-Portable-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PiP Browser",
+      "uninstallDisplayName": "PiP Browser",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "MonsieurZalfa",
+        "repo": "PiP-Browser",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MonsieurZalfa/PiP-Browser.git"
   }
 }

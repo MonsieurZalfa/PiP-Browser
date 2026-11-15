@@ -11,7 +11,7 @@ npm install
 npm start
 ```
 
-Créer un exécutable portable Windows : `npm run pack` (résultat dans `release`).
+Créer un installateur Windows : `npm run pack`. Version portable : `npm run pack:portable` (résultat dans `release`).
 
 ## Utilisation
 
@@ -97,3 +97,11 @@ Quitte l’ancienne version puis lance `PiP Browser 0.1.7.exe`.
 
 - Le cadre et son repère de coin deviennent invisibles en mode compact ou vidéo. Les mêmes zones sur les bords et les coins permettent toujours de redimensionner la fenêtre.
 - L’icône PiP est également affichée dans la barre supérieure de l’interface.
+
+## Application installable (0.2.0)
+
+Lancer **release/PiP-Browser-Setup-0.2.0-x64.exe** pour installer PiP Browser dans Windows avec ses raccourcis et son entrée de désinstallation. Quitter d'abord la version portable.
+
+Les mises à jour sont recherchées automatiquement puis téléchargées en arrière-plan. Le bouton **↑** et le menu près de l'horloge permettent une vérification manuelle et proposent le redémarrage lorsqu'une version est prête.
+
+La distribution en ligne reste à activer : le dépôt GitHub doit être public et contenir la première version avec ses trois fichiers. Voir [INSTALLATION.md](INSTALLATION.md) pour l'installation et le workflow de publication.

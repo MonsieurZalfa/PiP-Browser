@@ -28,3 +28,12 @@ Les essais réseau utilisent un profil distinct dans `.runtime`. Ils ne modifien
 - Test Electron : le cadre compact a un alpha inférieur ou égal à 2/255, le coin garde une zone de 12 × 12 pixels et son repère devient transparent. Le mode normal retrouve son fond opaque. L’image de l’icône dans le GUI charge correctement.
 - Test souris réel : réduction depuis le coin invisible, de 640 à 540 pixels de largeur, vérifiée visuellement en mode compact. L’icône de la barre supérieure a également été inspectée.
 - Le test d’intégration complet, notamment la vidéo en lecture, l’opacité, les gestes et les changements de mode, passe avec la nouvelle fenêtre transparente.
+
+## Installateur et mises à jour (0.2.0)
+
+- Installateur NSIS Windows x64 généré, avec raccourcis et désinstallation ; données utilisateur conservées.
+- Huit tests unitaires passent, dont quatre sur les mises à jour : mode développement/portable, recherches concurrentes, échec réseau et reprise, confirmation avant installation et sauvegarde préalable.
+- Le test Electron complet des fenêtres, gestes et vidéo passe avec le nouveau module.
+- Test réel electron-updater sur serveur local : détection d'une version supérieure, téléchargement de l'installateur généré, contrôle SHA-512 et passage à l'état prêt au redémarrage. L'installateur n'est pas exécuté par ce test.
+- Les fichiers app-update.yml, latest.yml et .blockmap sont générés. Le flux vise GitHub Releases (MonsieurZalfa/PiP-Browser).
+- L'installation Windows réelle, le redémarrage de mise à jour et le workflow GitHub n'ont pas été exécutés. La publication distante reste en attente d'un dépôt public et d'une connexion GitHub.

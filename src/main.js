@@ -3,9 +3,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { BAR_HEIGHT, FRAME_MARGIN, MIN_WIDTH, normalizeUrl, heightForWidth, constrainResize, sanitizeSavedWindow } = require('./core');
 const { setPlayerMode } = require('./player-mode');
+const { createUpdateManager } = require('./updates');
 
 const windows = new Map();
 const shortcuts = {};
+let updateManager;
 let tray, lastActive, saveTimer, quitting = false, gameMode = false;
 const shellFile = path.join(__dirname, 'index.html');
 const isYoutube = url => { try { return /(^|\.)youtube\.com$/.test(new URL(url).hostname); } catch { return false; } };
@@ -50,6 +52,7 @@ function update(record) {
     canGoBack: wc.navigationHistory.canGoBack(),
     youtube: isYoutube(wc.getURL()),
     shortcuts,
+    updates: updateManager?.state,
   });
 }
 function layout(record) {
@@ -194,6 +197,9 @@ function rebuildMenu() {
       record.win.show(); record.win.focus();
     } })),
     { type: 'separator' },
+    { label: 'PiP Browser ' + app.getVersion(), enabled: false },
+    { label: updateManager?.label() || 'Mises à jour', enabled: Boolean(updateManager?.state.enabled) && !['checking', 'downloading'].includes(updateManager?.state.status), click: () => updateManager?.act() },
+    { type: 'separator' },
     { label: 'Quitter', click: () => app.quit() },
   ]));
 }
@@ -273,6 +279,7 @@ ipcMain.handle('pip:command', async (event, name, value) => {
   try {
     const wc = record.view.webContents;
     switch (name) {
+      case 'updates': await updateManager?.act(); break;
       case 'ready': update(record); break;
       case 'navigate': record.state.url = normalizeUrl(value); wc.loadURL(record.state.url).catch(() => {}); break;
       case 'back': if (wc.navigationHistory.canGoBack()) wc.navigationHistory.goBack(); break;
@@ -333,12 +340,19 @@ else {
     for (const [name, candidates, handler] of bindings) {
       shortcuts[name] = candidates.find(key => globalShortcut.register(key, handler)) || null;
     }
+    updateManager = createUpdateManager({
+      app, autoUpdater: require('electron-updater').autoUpdater, dialog,
+      enabled: app.isPackaged && !process.env.PORTABLE_EXECUTABLE_FILE,
+      beforeInstall: () => { persist(); quitting = true; clearTimeout(saveTimer); },
+      onChange: () => { for (const record of windows.values()) update(record); rebuildMenu(); },
+    });
+    updateManager.start();
     let saved;
     try { saved = JSON.parse(fs.readFileSync(statePath(), 'utf8')); } catch {}
     createWindow(Array.isArray(saved) ? saved[0] : undefined);
   });
-  app.on('before-quit', () => { persist(); quitting = true; clearTimeout(saveTimer); });
-  app.on('will-quit', () => globalShortcut.unregisterAll());
+  app.on('before-quit', () => { if (!quitting) persist(); quitting = true; clearTimeout(saveTimer); });
+  app.on('will-quit', () => { updateManager?.dispose(); globalShortcut.unregisterAll(); });
   app.on('window-all-closed', () => app.quit());
 }
 

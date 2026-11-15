@@ -9,7 +9,7 @@ const command = async (name, value) => {
 };
 $('address-form').addEventListener('submit', event => { event.preventDefault(); command('navigate', $('address').value); });
 $('address').addEventListener('input', () => $('address').setCustomValidity(''));
-for (const name of ['back', 'reload', 'new', 'close', 'video', 'compact', 'game', 'smaller', 'larger', 'reset-size']) {
+for (const name of ['back', 'reload', 'new', 'close', 'video', 'compact', 'game', 'smaller', 'larger', 'reset-size', 'updates']) {
   $(name).addEventListener('click', () => command(name));
 }
 for (const handle of document.querySelectorAll('[data-edge]')) {
@@ -63,6 +63,10 @@ window.pip.onState(state => {
     $(name).title = `${descriptions[name]} · ${state.shortcuts[name] || 'menu PiP près de l’horloge'}`;
     if (name === 'compact') $(name).title += ' · Double clic droit dans la page';
   }
+  const updates = state.updates;
+  $('updates').disabled = !updates?.enabled || ['checking', 'downloading'].includes(updates?.status);
+  $('updates').textContent = updates?.status === 'downloaded' ? '↻' : '↑';
+  $('updates').title = !updates?.enabled ? 'Mises à jour disponibles dans l’application installée' : updates.status === 'downloaded' ? 'Redémarrer pour installer la version ' + updates.version : updates.status === 'downloading' ? 'Téléchargement : ' + updates.progress + ' %' : 'Vérifier les mises à jour';
   document.title = state.title ? `${state.title} — PiP Browser` : 'PiP Browser';
 });
 command('ready');
