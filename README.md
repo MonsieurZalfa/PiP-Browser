@@ -104,4 +104,4 @@ Lancer **release/PiP-Browser-Setup-0.2.0-x64.exe** pour installer PiP Browser da
 
 Les mises à jour sont recherchées automatiquement puis téléchargées en arrière-plan. Le bouton **↑** et le menu près de l'horloge permettent une vérification manuelle et proposent le redémarrage lorsqu'une version est prête.
 
-La distribution en ligne reste à activer : le dépôt GitHub doit être public et contenir la première version avec ses trois fichiers. Voir [INSTALLATION.md](INSTALLATION.md) pour l'installation et le workflow de publication.
+La première version est publiée sur [GitHub Releases](https://github.com/MonsieurZalfa/PiP-Browser/releases/latest). Les mises à jour sont distribuées depuis ce dépôt public. Voir [INSTALLATION.md](INSTALLATION.md) pour l'installation et le workflow de publication.

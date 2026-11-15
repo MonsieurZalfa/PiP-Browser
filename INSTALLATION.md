@@ -14,7 +14,7 @@ Le redémarrage exige une confirmation. Quitter normalement n'installe pas la mi
 
 ## Activation de la publication
 
-Le flux pointe sur **MonsieurZalfa/PiP-Browser** sur GitHub Releases. Le dépôt doit être public pour être accessible sans identifiant embarqué. Il répondait 404 en lecture anonyme pendant la préparation. Les mises à jour distribuées ne fonctionneront pas avant sa mise en accès public et la publication de la première version.
+Le flux public pointe sur **MonsieurZalfa/PiP-Browser** sur GitHub Releases. La première version v0.2.0 est publiée : https://github.com/MonsieurZalfa/PiP-Browser/releases/tag/v0.2.0. L’application accède aux mises à jour sans identifiant embarqué.
 
 Le workflow **.github/workflows/release.yml** est prêt :
 1. Changer la version de package.json puis exécuter npm install --package-lock-only.
@@ -35,7 +35,6 @@ Le workflow utilise le jeton temporaire GitHub Actions. Aucun jeton personnel n'
 - npm run pack : installateur NSIS et métadonnées, sans publication.
 - npm run pack:portable : exécutable portable.
 - npm test et npm run check : tests et syntaxe.
-- node node_modules/electron/cli.js test/updater-download.cjs : test réel de téléchargement sur un serveur local, après compilation. Il simule la version cliente 0.1.7 et ne lance jamais l'installateur.
+- node node_modules/electron/cli.js test/updater-download.cjs : test réel de téléchargement sur un serveur local, après compilation. Ajouter --github pour tester le flux public réel. Le test simule la version cliente 0.1.7 et ne lance jamais l'installateur.
 
 L'installateur n'est pas signé avec un certificat de signature Windows. Les téléchargements de mise à jour sont contrôlés par SHA-512 à partir du manifeste servi par GitHub en HTTPS.
-

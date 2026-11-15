@@ -36,4 +36,4 @@ Les essais réseau utilisent un profil distinct dans `.runtime`. Ils ne modifien
 - Le test Electron complet des fenêtres, gestes et vidéo passe avec le nouveau module.
 - Test réel electron-updater sur serveur local : détection d'une version supérieure, téléchargement de l'installateur généré, contrôle SHA-512 et passage à l'état prêt au redémarrage. L'installateur n'est pas exécuté par ce test.
 - Les fichiers app-update.yml, latest.yml et .blockmap sont générés. Le flux vise GitHub Releases (MonsieurZalfa/PiP-Browser).
-- L'installation Windows réelle, le redémarrage de mise à jour et le workflow GitHub n'ont pas été exécutés. La publication distante reste en attente d'un dépôt public et d'une connexion GitHub.
+- Le workflow GitHub a compilé et publié la version v0.2.0 avec succès. Le téléchargement réel depuis le flux GitHub public a été testé par electron-updater : nouvelle version détectée, exécutable téléchargé, empreinte SHA-512 vérifiée et état prêt au redémarrage obtenu. L’installation Windows réelle et le remplacement d’une application déjà installée n’ont pas été exécutés par les tests.

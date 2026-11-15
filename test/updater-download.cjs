@@ -7,6 +7,7 @@ const path = require('node:path');
 const http = require('node:http');
 const crypto = require('node:crypto');
 const assert = require('node:assert/strict');
+const useGithub = process.argv.includes('--github');
 const root = path.resolve(__dirname, '../release');
 const version = require('../package.json').version;
 const installer = 'PiP-Browser-Setup-' + version + '-x64.exe';
@@ -31,7 +32,7 @@ const server = http.createServer((request, response) => {
   };
   const updater = new NsisUpdater(null, adapter);
   updater.httpExecutor = new ElectronHttpExecutor(() => {});
-  updater.setFeedURL({ provider: 'generic', url: 'http://127.0.0.1:' + server.address().port });
+  updater.setFeedURL(useGithub ? { provider: 'github', owner: 'MonsieurZalfa', repo: 'PiP-Browser' } : { provider: 'generic', url: 'http://127.0.0.1:' + server.address().port });
   updater.disableDifferentialDownload = true;
   updater.logger = { info() {}, warn() {}, error() {}, debug() {} };
   const manager = createUpdateManager({
@@ -45,9 +46,9 @@ const server = http.createServer((request, response) => {
     assert.equal(manager.state.status, 'downloaded');
     assert.equal(manager.state.version, version);
     const hash = file => crypto.createHash('sha512').update(fs.readFileSync(file)).digest('hex');
-    assert.equal(hash(files[0]), hash(path.join(root, installer)));
-    console.log('REAL UPDATE OK: detection, download, SHA-512 integrity and ready-to-restart state. Installer not executed.');
+    if (useGithub) {
+      assert.equal(crypto.createHash('sha512').update(fs.readFileSync(files[0])).digest('base64'), result.updateInfo.files[0].sha512);
+    } else assert.equal(hash(files[0]), hash(path.join(root, installer)));
+    console.log((useGithub ? 'GITHUB ' : 'LOCAL ') + 'REAL UPDATE OK: detection, download, SHA-512 integrity and ready-to-restart state. Installer not executed.');
   } finally { manager.dispose(); server.close(); app.quit(); }
 })().catch(error => { console.error(error); server.close(); app.exit(1); });
-
-
