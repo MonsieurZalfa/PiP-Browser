@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'">
+  <title>PiP Browser</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="titlebar">
+      <div class="drag-zone" title="Maintenir et glisser pour déplacer la fenêtre"><strong><img class="app-icon" src="../assets/icon.svg" alt="" draggable="false">PiP</strong><span>⠿ Déplacer la fenêtre</span></div>
+      <button id="smaller" title="Diminuer la taille" aria-label="Diminuer la taille">−</button>
+      <button id="larger" title="Augmenter la taille" aria-label="Augmenter la taille">＋</button>
+      <button id="reset-size" title="Revenir à une largeur de 640 pixels">640 px</button>
+    </div>
+    <div class="navigation">
+      <button id="back" title="Page précédente" aria-label="Page précédente">‹</button>
+      <button id="reload" title="Recharger" aria-label="Recharger">↻</button>
+      <form id="address-form"><input id="address" aria-label="Adresse internet" placeholder="Adresse internet" spellcheck="false"></form>
+      <button id="new" title="Nouvelle fenêtre · Ctrl+Alt+N" aria-label="Nouvelle fenêtre">＋</button>
+      <button id="close" title="Fermer cette fenêtre" aria-label="Fermer">×</button>
+    </div>
+    <div class="settings">
+      <label title="Opacité de cette fenêtre">Opacité <input id="opacity" type="range" min="20" max="100" value="100"><output id="opacity-value">100 %</output></label>
+      <button id="video" title="Isoler le lecteur sur YouTube · Double clic droit dans la page : vidéo + compact / normal" aria-pressed="false">Vidéo</button>
+      <button id="compact" title="Masquer les commandes · Ctrl+Alt+B">Compact</button>
+      <button id="game" title="Laisser les clics traverser · Ctrl+Alt+G">Jeu</button>
+      <span class="ratio">16:9</span>
+    </div>
+  </header>
+  <div id="resize-handles" aria-hidden="true">
+    <div data-edge="top"></div><div data-edge="bottom"></div><div data-edge="left"></div><div data-edge="right"></div>
+    <div data-edge="top-left"></div><div data-edge="top-right"></div><div data-edge="bottom-left"></div><div data-edge="bottom-right"></div>
+  </div>
+  <div id="status" role="status"></div>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+:root { color-scheme: dark; font: 12px 'Segoe UI', sans-serif; background: #10151e; color: #e8eef8; }
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; }
+header { height: 108px; padding: 6px 6px 0; background: #141b27; border-bottom: 1px solid #334158; }
+.titlebar, .navigation, .settings { display: flex; align-items: center; gap: 5px; padding: 3px 4px; }
+.titlebar { height: 30px; background: #233044; border-radius: 4px; }
+.navigation { height: 34px; }
+.settings { height: 38px; }
+.drag-zone { -webkit-app-region: no-drag; cursor: grab; touch-action: none; flex: 1; min-width: 100px; height: 100%; display: flex; align-items: center; gap: 16px; user-select: none; }
+.drag-zone:active { cursor: grabbing; }
+.drag-zone strong { color: #83d7c3; white-space: nowrap; }
+.drag-zone strong { display: inline-flex; align-items: center; gap: 5px; }
+.app-icon { width: 22px; height: 22px; user-select: none; pointer-events: none; }
+.drag-zone span { color: #a6b9d3; font-size: 11px; }
+.titlebar button { padding: 2px 8px; }
+.navigation button, form, input { -webkit-app-region: no-drag; }
+.brand { color: #83d7c3; font-weight: 700; white-space: nowrap; margin-right: 4px; }
+button { border: 1px solid #344056; background: #202b3c; color: #e8eef8; border-radius: 6px; padding: 5px 7px; cursor: pointer; white-space: nowrap; font: inherit; }
+button:hover { background: #344762; }
+button:focus-visible, input:focus-visible { outline: 2px solid #83d7c3; }
+button[aria-pressed="true"] { background: #27594f; border-color: #83d7c3; }
+button:disabled { opacity: .4; cursor: default; }
+#close:hover { background: #8b3545; }
+form { flex: 1; min-width: 35px; }
+#address { width: 100%; border: 1px solid #344056; border-radius: 6px; padding: 6px; color: #dfe9fa; background: #0e1420; font: inherit; }
+label { display: flex; align-items: center; gap: 5px; white-space: nowrap; flex: 1; }
+input[type="range"] { width: clamp(35px, 10vw, 100px); min-width: 35px; accent-color: #83d7c3; }
+output { min-width: 34px; font-variant-numeric: tabular-nums; }
+.ratio { color: #92a5bd; font-size: 10px; }
+#status { padding: 22px; color: #b5c6dc; }
+[data-edge] { position: fixed; z-index: 100; -webkit-app-region: no-drag; touch-action: none; }
+[data-edge="top"], [data-edge="bottom"] { left: 12px; right: 12px; height: 6px; cursor: ns-resize; }
+[data-edge="top"] { top: 0; } [data-edge="bottom"] { bottom: 0; }
+[data-edge="left"], [data-edge="right"] { top: 12px; bottom: 12px; width: 6px; cursor: ew-resize; }
+[data-edge="left"] { left: 0; } [data-edge="right"] { right: 0; }
+[data-edge="top-left"], [data-edge="top-right"], [data-edge="bottom-left"], [data-edge="bottom-right"] { width: 12px; height: 12px; }
+[data-edge="top-left"], [data-edge="bottom-right"] { cursor: nwse-resize; }
+[data-edge="top-right"], [data-edge="bottom-left"] { cursor: nesw-resize; }
+[data-edge="top-left"] { top: 0; left: 0; } [data-edge="top-right"] { top: 0; right: 0; }
+[data-edge="bottom-left"] { bottom: 0; left: 0; } [data-edge="bottom-right"] { bottom: 0; right: 0; border-right: 3px solid #83d7c3; border-bottom: 3px solid #83d7c3; }
+/* One alpha level keeps the invisible resize surface hittable on Windows. */
+:root.minimal-frame { background: rgba(0, 0, 0, 0.004); }
+.compact header, .compact #status { display: none; }
+.minimal-frame [data-edge="bottom-right"] { border-color: transparent; }
+@media (max-width: 450px) { .drag-zone { gap: 8px; } .drag-zone span { font-size: 10px; } .settings { gap: 3px; } .settings button { padding: 5px; } .ratio { display: none; } }
