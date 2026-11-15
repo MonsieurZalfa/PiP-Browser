@@ -88,7 +88,9 @@ window.pipSync.onState(state => {
   info.textContent = !state.window
     ? 'Aucune fenêtre synchronisée : clique sur « Synchro » dans une fenêtre PiP.'
     : state.window.outOfSync ? `La fenêtre « ${state.window.title} » affiche une autre page que le salon.` : `Fenêtre synchronisée : ${state.window.title}`;
-  $('share').disabled = !state.window?.videoId || state.window.videoId === room.videoId;
+  // Nothing to add if the window shows the room video or one already queued.
+  $('share').disabled = !state.window?.videoId || state.window.videoId === room.videoId
+    || state.queue.some(entry => entry.video_id === state.window.videoId);
   $('resync').disabled = !state.window || !room.videoId;
   $('next').disabled = !room.videoId && !state.queue.length;
   renderQueue(state.queue, room.mine);

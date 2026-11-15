@@ -279,10 +279,11 @@ function openSync(record) {
   if (syncWin && !syncWin.isDestroyed()) { syncWin.show(); syncWin.focus(); sendSyncState(); return; }
   const anchor = record?.win.getBounds();
   const work = screen.getDisplayMatching(anchor || screen.getPrimaryDisplay().workArea).workArea;
-  const x = anchor ? Math.min(anchor.x + anchor.width + 8, work.x + work.width - 380) : undefined;
+  const width = 440, height = Math.min(700, work.height - 40);
+  const x = anchor ? Math.min(anchor.x + anchor.width + 8, work.x + work.width - width - 16) : undefined;
   syncWin = new BrowserWindow({
     icon: path.join(__dirname, '../assets/icon.ico'), title: 'Synchro guilde — PiP Browser',
-    width: 380, height: 620, minWidth: 320, minHeight: 360, alwaysOnTop: true, autoHideMenuBar: true,
+    width, height, useContentSize: true, minWidth: 360, minHeight: 400, alwaysOnTop: true, autoHideMenuBar: true,
     ...(anchor ? { x, y: Math.max(work.y, anchor.y) } : {}),
     backgroundColor: '#10151e', maximizable: false, fullscreenable: false,
     webPreferences: { preload: path.join(__dirname, 'sync-preload.js'), nodeIntegration: false, contextIsolation: true, sandbox: true },
@@ -458,14 +459,11 @@ ipcMain.handle('pip:sync-command', async (event, name, value) => {
     case 'copy-code': if (syncManager.state.room) clipboard.writeText(syncManager.state.room.id); break;
     case 'resync': applySyncTarget(syncManager.target(), true); break;
     case 'share': {
+      // Adds the synced window's video to the waiting list: the video
+      // currently watched by the room is never interrupted.
       const record = syncRecord();
       const videoId = record && parseYoutubeVideo(record.view.webContents.getURL());
-      if (!videoId) break;
-      const [time, playing] = await record.view.webContents.executeJavaScript(
-        "(() => { const v = document.querySelector('#movie_player video'); return v ? [v.currentTime, !v.paused] : [0, true]; })()",
-      ).catch(() => [0, true]);
-      record.syncVideo = videoId;
-      await syncManager.shareVideo(videoId, Number.isFinite(time) ? time : 0, playing === true);
+      if (videoId) await syncManager.enqueue(watchUrl(videoId));
       break;
     }
   }

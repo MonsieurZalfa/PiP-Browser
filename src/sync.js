@@ -357,16 +357,6 @@ function createSyncManager({
     await loadQueue();
   }
 
-  // Shares the video of the synced window with the whole room.
-  async function shareVideo(videoId, position = 0, playing = true) {
-    const room = requireRoom();
-    if (!parseYoutubeVideo(`https://youtu.be/${videoId}`)) throw new Error('Ouvre une vidéo YouTube dans la fenêtre synchronisée.');
-    receiveRoom(await call('set_playback', {
-      p_room: room.id, p_video_id: videoId, p_playing: playing, p_position: Math.max(0, Number(position) || 0),
-      p_title: await fetchTitle(videoId),
-    }));
-  }
-
   // Playback reports from the synced page. Remote changes applied by the page
   // itself are filtered there; matching states are filtered again here.
   function handleMedia(input) {
@@ -402,7 +392,6 @@ function createSyncManager({
     removeItem: id => run(() => removeItem(id)),
     playItem: id => run(() => playItem(id)),
     next: () => run(next),
-    shareVideo: (videoId, position, playing) => run(() => shareVideo(videoId, position, playing)),
     handleMedia,
     target: roomTarget,
     async dispose() {
