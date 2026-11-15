@@ -2,7 +2,8 @@ const { app, BrowserWindow, WebContentsView, ipcMain, globalShortcut, Menu, Tray
 const fs = require('node:fs');
 const path = require('node:path');
 const { BAR_HEIGHT, FRAME_MARGIN, MIN_WIDTH, normalizeUrl, heightForWidth, constrainResize, sanitizeSavedWindow } = require('./core');
-const { setPlayerMode } = require('./player-mode');
+const { setPlayerMode, findPlayer } = require('./player-mode');
+const { createRightGesture } = require('./native-gestures');
 const { createUpdateManager } = require('./updates');
 const { createSyncManager, createFileStorage } = require('./sync');
 const { parseYoutubeVideo, watchUrl, sanitizeSyncSettings } = require('./sync-core');
@@ -13,20 +14,25 @@ let updateManager, syncManager, syncWin = null, syncTargetId = null;
 let tray, lastActive, saveTimer, quitting = false, gameMode = false, allHidden = false;
 const shellFile = path.join(__dirname, 'index.html');
 const isYoutube = url => { try { return /(^|\.)youtube\.com$/.test(new URL(url).hostname); } catch { return false; } };
+const isTwitch = url => { try { return /(^|\.)twitch\.tv$/.test(new URL(url).hostname); } catch { return false; } };
+const supportsVideo = url => isYoutube(url) || isTwitch(url);
+const playerCode = enable => '(' + setPlayerMode.toString() + ')(' + JSON.stringify(enable) + ', ' + findPlayer.toString() + ')';
 const videoCSS = `
-  html:has(#movie_player:popover-open), html:has(#movie_player:popover-open) body { overflow: hidden !important; }
-  #movie_player[popover]:popover-open {
+  html:has([data-pip-browser-player]:popover-open), html:has([data-pip-browser-player]:popover-open) body { overflow: hidden !important; }
+  [data-pip-browser-player][popover]:popover-open {
     position: fixed !important; inset: 0 !important; margin: 0 !important;
     width: 100vw !important; height: 100vh !important;
     max-width: none !important; max-height: none !important;
     border: 0 !important; padding: 0 !important; transform: none !important;
     background: black !important; overflow: hidden !important;
   }
-  #movie_player:popover-open::backdrop { background: black; }
-  #movie_player:popover-open .html5-video-container {
-    position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;
+  [data-pip-browser-player]:popover-open::backdrop { background: black; }
+  [data-pip-browser-player]:popover-open .html5-video-container,
+  [data-pip-browser-player]:popover-open .video-player__container,
+  [data-pip-browser-player]:popover-open .video-ref {
+    position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; max-height: none !important; max-width: none !important;
   }
-  #movie_player:popover-open video {
+  [data-pip-browser-player]:popover-open video {
     width: 100% !important; height: 100% !important;
     left: 0 !important; top: 0 !important; object-fit: contain !important;
   }
@@ -53,6 +59,7 @@ function update(record) {
     title: wc.getTitle(),
     canGoBack: wc.navigationHistory.canGoBack(),
     youtube: isYoutube(wc.getURL()),
+    videoSupported: supportsVideo(wc.getURL()),
     shortcuts,
     updates: updateManager?.state,
     sync: { enabled: Boolean(syncManager?.state.enabled), active: record.win.id === syncTargetId, inRoom: Boolean(syncManager?.state.room) },
@@ -114,15 +121,15 @@ function setCompact(record, compact) {
 }
 async function applyVideo(record) {
   const wc = record.view.webContents;
-  const enable = record.state.videoOnly && isYoutube(wc.getURL());
+  const enable = record.state.videoOnly && supportsVideo(wc.getURL());
   try {
     // The browser top layer escapes YouTube's ancestor clipping/compositing
     // contexts without moving the player node or recreating its video surface.
     if (enable && !record.cssKey) record.cssKey = await wc.insertCSS(videoCSS);
-    await wc.executeJavaScript(`(${setPlayerMode.toString()})(${JSON.stringify(enable)})`, true);
+    await wc.executeJavaScript(playerCode(enable), true);
     if (!enable && record.cssKey) { await wc.removeInsertedCSS(record.cssKey); record.cssKey = null; }
   } catch (error) {
-    await wc.executeJavaScript(`(${setPlayerMode.toString()})(false)`).catch(() => {});
+    await wc.executeJavaScript(playerCode(false)).catch(() => {});
     if (record.cssKey) { await wc.removeInsertedCSS(record.cssKey).catch(() => {}); record.cssKey = null; }
     record.state.videoOnly = false;
     update(record);
@@ -138,7 +145,7 @@ function toggleVideoCompact(record) {
   return queueModeChange(record, async () => {
     if (gameMode) return;
     const wc = record.view.webContents;
-    const hasPlayer = isYoutube(wc.getURL()) && await wc.executeJavaScript("Boolean(document.querySelector('#movie_player video'))");
+    const hasPlayer = supportsVideo(wc.getURL()) && await wc.executeJavaScript('Boolean((' + findPlayer.toString() + ')())');
     if (!hasPlayer) {
       if (record.state.videoOnly) { record.state.videoOnly = false; await applyVideo(record); }
       setCompact(record, !record.state.compact);
@@ -348,7 +355,14 @@ function createWindow(saved) {
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', event => event.preventDefault());
   const wc = view.webContents;
+  const nativeGesture = createRightGesture({
+    start: point => startMove(record, point), move: point => moveWindow(record, point),
+    end: () => { delete record.moveStart; },
+    toggle: () => toggleVideoCompact(record).catch(error => console.warn('Geste Twitch :', error.message)),
+  });
+  wc.on('blur', nativeGesture.cancel);
   wc.on('before-mouse-event', (event, mouse) => {
+    if (!gameMode && isTwitch(wc.getURL())) { nativeGesture.handle(event, mouse); return; }
     if (!gameMode && mouse.type === 'contextMenu') event.preventDefault();
   });
   const guardNavigation = (event, url) => { try { normalizeUrl(url); } catch { event.preventDefault(); } };
@@ -424,7 +438,7 @@ ipcMain.handle('pip:command', async (event, name, value) => {
       case 'opacity': if (typeof value === 'number' && Number.isFinite(value)) { record.state.opacity = Math.max(.2, Math.min(1, value)); win.setOpacity(record.state.opacity); update(record); } break;
       case 'compact': if (!gameMode) setCompact(record, !record.state.compact); break;
       case 'game': setGame(!gameMode); break;
-      case 'video': if (isYoutube(wc.getURL())) await queueModeChange(record, async () => { record.state.videoOnly = !record.state.videoOnly; await applyVideo(record); update(record); }); break;
+      case 'video': if (supportsVideo(wc.getURL())) await queueModeChange(record, async () => { record.state.videoOnly = !record.state.videoOnly; await applyVideo(record); update(record); }); break;
     }
     scheduleSave();
   } catch (error) { return { error: error.message }; }

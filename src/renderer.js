@@ -57,7 +57,7 @@ window.pip.onState(state => {
   $('opacity-value').textContent = `${Math.round(state.opacity * 100)} %`;
   $('back').disabled = !state.canGoBack;
   $('video').setAttribute('aria-pressed', String(state.videoOnly));
-  $('video').disabled = !state.youtube;
+  $('video').disabled = !state.videoSupported;
   for (const name of ['new', 'game', 'compact']) {
     const descriptions = { new: 'Nouvelle fenêtre', game: 'Laisser les clics traverser', compact: 'Masquer les commandes' };
     $(name).title = `${descriptions[name]} · ${state.shortcuts[name] || 'menu PiP près de l’horloge'}`;

@@ -1,5 +1,15 @@
+function findPlayer() {
+  const host = location.hostname;
+  if (/(^|\.)youtube\.com$/.test(host)) return document.querySelector('#movie_player video')?.closest('#movie_player') || null;
+  if (/(^|\.)twitch\.tv$/.test(host)) {
+    const video = [...document.querySelectorAll('video')].sort((a, b) => b.getBoundingClientRect().width * b.getBoundingClientRect().height - a.getBoundingClientRect().width * a.getBoundingClientRect().height)[0];
+    return video?.closest('[data-a-target="video-player"], .video-player') || document.querySelector('iframe[src*="player.twitch.tv"]') || null;
+  }
+  return null;
+}
+
 // This function is serialized into the remote page. It has no Electron access.
-function setPlayerMode(enable) {
+function setPlayerMode(enable, findPlayer) {
   const key = Symbol.for('pip-browser.video-mode');
   const existing = window[key];
   if (!enable) {
@@ -8,7 +18,7 @@ function setPlayerMode(enable) {
     return;
   }
   if (existing) { existing.repair(); return; }
-  if (!document.querySelector('#movie_player video')) throw new Error('Ouvre une vidéo YouTube avant d’activer ce mode.');
+  if (!findPlayer()) throw new Error('Ouvre une vidéo YouTube ou Twitch avant d’activer ce mode.');
 
   let active = true;
   let saved = null;
@@ -20,24 +30,27 @@ function setPlayerMode(enable) {
   const resizeObserver = new ResizeObserver(schedule);
   function restore() {
     if (!saved) return;
-    const { player, attribute } = saved;
+    const { player, attribute, marker } = saved;
     saved = null;
     player.removeEventListener('toggle', schedule);
     resizeObserver.unobserve(player);
     if (player.matches(':popover-open')) player.hidePopover();
     if (attribute === null) player.removeAttribute('popover');
     else player.setAttribute('popover', attribute);
+    if (marker === null) player.removeAttribute('data-pip-browser-player');
+    else player.setAttribute('data-pip-browser-player', marker);
   }
   function repair() {
     if (!active) return;
-    const player = document.getElementById('movie_player');
-    if (!player?.isConnected || !player.querySelector('video')) return;
+    const player = findPlayer();
+    if (!player?.isConnected) return;
     if (saved?.player !== player) {
       restore();
-      saved = { player, attribute: player.getAttribute('popover') };
+      saved = { player, attribute: player.getAttribute('popover'), marker: player.getAttribute('data-pip-browser-player') };
       player.addEventListener('toggle', schedule);
       resizeObserver.observe(player);
     }
+    if (!player.hasAttribute('data-pip-browser-player')) player.setAttribute('data-pip-browser-player', '');
     if (player.getAttribute('popover') !== 'manual') player.setAttribute('popover', 'manual');
     // YouTube reparents/replaces its player at responsive breakpoints. Removing
     // a popover from the DOM closes it even if it is inserted again immediately.
@@ -62,4 +75,4 @@ function setPlayerMode(enable) {
   repair();
 }
 
-module.exports = { setPlayerMode };
+module.exports = { setPlayerMode, findPlayer };

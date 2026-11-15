@@ -23,8 +23,8 @@ Créer un installateur Windows : `npm run pack`. Version portable : `npm run pac
 - Déplace la fenêtre depuis la large barre supérieure **⠿ Déplacer la fenêtre**, et redimensionne depuis ses bords ou la poignée turquoise en bas à droite. La zone de contenu conserve le ratio 16:9, avec une fine bordure de 6 pixels. Les commandes occupent 108 pixels en haut en mode édition.
 - Les boutons **−** et **＋** de la barre supérieure diminuent ou augmentent la taille. **640 px** rétablit une largeur raisonnable sans changer la page ni son opacité.
 - **Opacité** règle toute la fenêtre de 20 à 100 %.
-- **Vidéo** isole le lecteur YouTube, sans extraire ni télécharger le flux. Ce mode expérimental dépend de la structure du site et fonctionne sur une page contenant un lecteur, pas sur la page d’accueil.
-- Un **double clic droit dans la page** bascule entre **vidéo + compact** et le **mode normal** si un lecteur YouTube est présent. Dans une page ordinaire, ou une page YouTube sans lecteur, il active/désactive seulement **Compact**. Il agit seulement sur cette fenêtre. Le clic droit y est réservé à ce geste pour éviter que le menu du site intercepte le deuxième clic.
+- **Vidéo** isole le lecteur YouTube ou Twitch, sans extraire ni télécharger le flux. Ce mode expérimental dépend de la structure du site et fonctionne sur une page contenant un lecteur, pas sur la page d’accueil.
+- Un **double clic droit dans la page** bascule entre **vidéo + compact** et le **mode normal** si un lecteur YouTube ou Twitch est présent. Dans une page ordinaire, ou une page sans lecteur compatible, il active/désactive seulement **Compact**. Il agit seulement sur cette fenêtre. Le clic droit y est réservé à ce geste pour éviter que le menu du site intercepte le deuxième clic.
 - Pour déplacer une fenêtre en mode normal, compact ou vidéo, maintiens le **clic droit dans le contenu** et glisse. Les petits mouvements de souris sont ignorés. Le relâchement après déplacement ne déclenche ni clic ni changement de mode. Le bouton gauche reste entièrement dédié à la page, y compris le maintien pour accélérer une vidéo YouTube. En mode jeu, utilise d’abord **Ctrl+Alt+G** pour reprendre le contrôle de la fenêtre : les clics y traversent la fenêtre vers le jeu.
 - **Compact** masque la barre de commandes. **Ctrl+Alt+B** la réaffiche pour la dernière fenêtre active. Les boutons de taille sont distincts de ce mode.
 - **Jeu** masque les commandes de toutes les fenêtres et laisse passer les clics vers le jeu. **Ctrl+Alt+G** quitte ce mode et restaure les barres précédemment visibles.
@@ -121,3 +121,10 @@ La première version est publiée sur [GitHub Releases](https://github.com/Monsi
 - La commande est aussi disponible dans le menu PiP près de l'horloge. Si le raccourci est occupé, **Ctrl+Alt+Maj+H** est essayé.
 - La récupération des fenêtres réaffiche également les fenêtres masquées. Le masquage n'est pas conservé au redémarrage.
 - Un [guide de contribution](contribution.md) décrit le travail à plusieurs sur le projet.
+
+## Mise à jour 0.2.3 — Twitch
+
+- Le double clic droit active vidéo + compact sur Twitch, et le même geste restaure la page normale.
+- Le clic droit maintenu permet de déplacer la fenêtre Twitch. Ces gestes sont interceptés avant leur transmission au lecteur pour éviter les conflits avec ses contrôles.
+- Le lecteur remplit directement la fenêtre PiP. Le mode Studio de Twitch reste utilisable et son réglage n’est pas modifié.
+- Les correctifs de synchronisation récupérés avant cette mise à jour sont conservés.

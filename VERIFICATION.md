@@ -37,3 +37,11 @@ Les essais réseau utilisent un profil distinct dans `.runtime`. Ils ne modifien
 - Test réel electron-updater sur serveur local : détection d'une version supérieure, téléchargement de l'installateur généré, contrôle SHA-512 et passage à l'état prêt au redémarrage. L'installateur n'est pas exécuté par ce test.
 - Les fichiers app-update.yml, latest.yml et .blockmap sont générés. Le flux vise GitHub Releases (MonsieurZalfa/PiP-Browser).
 - Le workflow GitHub a compilé et publié la version v0.2.0 avec succès. Le téléchargement réel depuis le flux GitHub public a été testé par electron-updater : nouvelle version détectée, exécutable téléchargé, empreinte SHA-512 vérifiée et état prêt au redémarrage obtenu. L’installation Windows réelle et le remplacement d’une application déjà installée n’ont pas été exécutés par les tests.
+
+## Compatibilité Twitch (0.2.3)
+
+- Pull effectué avant toute modification : main mis à jour de bfb1907 à a9566de avec les correctifs de synchronisation.
+- Tests dédiés Twitch : lecteur direct et iframe, double clic droit, déplacement natif sans changement de taille, redimensionnement, retour normal et conservation d’une mise en page Studio préexistante.
+- Vérification sur un direct Twitch public : lecture en cours avant et après activation (21,68 s puis 23,26 s), lecteur couvrant toute la vue 988 × 556 ; déplacement de 60 × 40 pixels sans variation de taille ; restauration des commandes.
+- Image du direct en mode vidéo inspectée. Le lecteur n’est ni extrait ni recréé.
+- Les tests Electron YouTube et de synchronisation passent après la modification. Aucun changement des fonctions de synchronisation n’a été effectué.
