@@ -54,6 +54,8 @@ Le test d’intégration `test:smoke` ouvre de vraies fenêtres Electron avec de
 
 Voir [VERIFICATION.md](VERIFICATION.md) pour les résultats obtenus et les points restant à vérifier manuellement.
 
+Pour participer au développement, voir le [guide de contribution](contribution.md).
+
 ## Mise à jour 0.1.1
 
 Quitte l’ancienne version depuis le menu près de l’horloge avant de lancer `PiP Browser 0.1.1.exe`. Les fenêtres enregistrées par la version 0.1.0 sont rouvertes avec leurs adresses et une largeur limitée à 800 pixels. Leurs commandes sont réaffichées. Les nouvelles tailles choisies en 0.1.1 sont ensuite mémorisées normalement.
