@@ -9,7 +9,7 @@
     "test": "node --test test/*.test.js",
     "test:smoke": "electron test/smoke.cjs",
     "test:sync-smoke": "electron test/sync-smoke.cjs",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/renderer.js && node --check src/player-mode.js && node --check src/surface-preload.js && node --check src/updates.js && node --check src/sync.js && node --check src/sync-core.js && node --check src/sync-preload.js && node --check src/sync-renderer.js && node --check src/native-gestures.js",
+    "check": "node --check src/main.js && node --check src/bookmarks.js && node --check src/preload.js && node --check src/renderer.js && node --check src/player-mode.js && node --check src/surface-preload.js && node --check src/updates.js && node --check src/sync.js && node --check src/sync-core.js && node --check src/sync-preload.js && node --check src/sync-renderer.js && node --check src/native-gestures.js",
     "pack": "electron-builder --win nsis --publish never",
     "pack:portable": "electron-builder --win portable --publish never",
     "test:twitch-smoke": "electron test/twitch-smoke.cjs"

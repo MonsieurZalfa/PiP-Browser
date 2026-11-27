@@ -20,6 +20,7 @@ Créer un installateur Windows : `npm run pack`. Version portable : `npm run pac
 ## Utilisation
 
 - Colle une adresse dans la barre puis appuie sur Entrée. Le bouton **＋** crée une fenêtre indépendante.
+- **☆** ajoute la page courante aux favoris avec son titre ; **★** la retire. Le menu **Favoris**, également disponible près de l’horloge, permet d’ouvrir un favori dans cette fenêtre ou dans une nouvelle fenêtre, et de le supprimer. Les favoris sont communs à toutes les fenêtres et conservés dans `bookmarks.json` dans le dossier de données de l’application.
 - Déplace la fenêtre depuis la large barre supérieure **⠿ Déplacer la fenêtre**, et redimensionne depuis ses bords ou la poignée turquoise en bas à droite. La zone de contenu conserve le ratio 16:9, avec une fine bordure de 6 pixels. Les commandes occupent 108 pixels en haut en mode édition.
 - Les boutons **−** et **＋** de la barre supérieure diminuent ou augmentent la taille. **640 px** rétablit une largeur raisonnable sans changer la page ni son opacité.
 - **Opacité** règle toute la fenêtre de 20 à 100 %.

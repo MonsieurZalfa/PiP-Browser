@@ -1,5 +1,5 @@
 // Real Electron integration test; web responses are fixtures, with an isolated profile.
-const { app, BrowserWindow, session, globalShortcut } = require('electron');
+const { app, BrowserWindow, session, globalShortcut, Menu } = require('electron');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
@@ -8,6 +8,7 @@ const profile = path.resolve(__dirname, '../.runtime/smoke-profile');
 fs.mkdirSync(profile, { recursive: true });
 // Make startup deterministic without touching the user's actual browser profile.
 fs.writeFileSync(path.join(profile, 'windows.json'), '[{}, {}]');
+fs.writeFileSync(path.join(profile, 'bookmarks.json'), '[]');
 app.setPath('userData', profile);
 app.whenReady().then(() => {
   session.fromPartition('persist:browsing').protocol.handle('https', request => new URL(request.url).hostname === 'example.test'
@@ -48,6 +49,45 @@ app.whenReady().then(async () => {
     await command('new');
     await until(() => BrowserWindow.getAllWindows().length === 2 && BrowserWindow.getAllWindows().every(w => w.isVisible() && !w.webContents.isLoading() && w.contentView.children[0]?.webContents.getTitle() === 'Lecteur de test'));
     assert.ok(win.isAlwaysOnTop());
+    // Exercise the real toolbar, persistence, and shared state across windows.
+    await win.webContents.executeJavaScript("document.getElementById('bookmark').click()");
+    const starred = w => w.webContents.executeJavaScript("document.getElementById('bookmark').getAttribute('aria-pressed') === 'true'");
+    await until(async () => (await Promise.all(BrowserWindow.getAllWindows().map(starred))).every(Boolean));
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(profile, 'bookmarks.json'), 'utf8')), [
+      { url: 'https://www.youtube.com/', title: 'Lecteur de test' },
+    ]);
+    let favoritesMenu;
+    const originalPopup = Menu.prototype.popup;
+    try {
+      Menu.prototype.popup = function () { favoritesMenu = this; };
+      await command('bookmarks');
+    } finally { Menu.prototype.popup = originalPopup; }
+    assert.equal(favoritesMenu.items[0].label, 'Lecteur de test');
+    await command('navigate', 'https://example.test/');
+    await until(() => view.webContents.getTitle() === 'Page sans vidéo' && !view.webContents.isLoading());
+    await until(async () => !(await starred(win)));
+    favoritesMenu.items[0].submenu.items[0].click();
+    await until(() => view.webContents.getTitle() === 'Lecteur de test' && !view.webContents.isLoading());
+    await until(() => starred(win));
+    const beforeFavoriteOpen = BrowserWindow.getAllWindows().map(w => w.id);
+    favoritesMenu.items[0].submenu.items[1].click();
+    await until(() => BrowserWindow.getAllWindows().length === 3 && BrowserWindow.getAllWindows().every(w => w.isVisible() && !w.webContents.isLoading() && !w.contentView.children[0]?.webContents.isLoading() && w.contentView.children[0]?.webContents.getTitle() === 'Lecteur de test'));
+    BrowserWindow.getAllWindows().find(w => !beforeFavoriteOpen.includes(w.id)).close();
+    await until(() => BrowserWindow.getAllWindows().length === 2);
+    favoritesMenu.items[0].submenu.items[3].click();
+    await until(async () => (await Promise.all(BrowserWindow.getAllWindows().map(starred))).every(value => !value));
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(profile, 'bookmarks.json'), 'utf8')), []);
+    win.setContentSize(384, heightForWidth(384, false));
+    await delay(100);
+    assert.equal(await win.webContents.executeJavaScript(`(() => {
+      const ids = ['address', 'bookmark', 'bookmarks', 'new', 'close'];
+      return ids.every(id => {
+        const rect = document.getElementById(id).getBoundingClientRect();
+        return rect.width > 0 && rect.left >= 0 && rect.right <= innerWidth;
+      });
+    })()`), true, 'favorites controls must fit at the minimum window width');
+    fs.writeFileSync(path.resolve(__dirname, '../.runtime/bookmarks-toolbar.png'), (await win.capturePage()).toPNG());
+    await command('reset-size');
     assert.equal(await win.webContents.executeJavaScript("Boolean(document.querySelector('.app-icon').complete && document.querySelector('.app-icon').naturalWidth > 0)"), true, 'the GUI icon must load');
     assert.equal(view.webContents.getLastWebPreferences().nodeIntegration, false);
     assert.equal(view.webContents.getLastWebPreferences().sandbox, true);

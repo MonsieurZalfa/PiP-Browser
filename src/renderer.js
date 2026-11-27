@@ -9,7 +9,7 @@ const command = async (name, value) => {
 };
 $('address-form').addEventListener('submit', event => { event.preventDefault(); command('navigate', $('address').value); });
 $('address').addEventListener('input', () => $('address').setCustomValidity(''));
-for (const name of ['back', 'reload', 'new', 'close', 'video', 'compact', 'game', 'smaller', 'larger', 'reset-size', 'updates', 'sync']) {
+for (const name of ['back', 'reload', 'new', 'close', 'video', 'compact', 'game', 'smaller', 'larger', 'reset-size', 'updates', 'sync', 'bookmark', 'bookmarks']) {
   $(name).addEventListener('click', () => command(name));
 }
 for (const handle of document.querySelectorAll('[data-edge]')) {
@@ -56,6 +56,11 @@ window.pip.onState(state => {
   $('opacity').value = Math.round(state.opacity * 100);
   $('opacity-value').textContent = `${Math.round(state.opacity * 100)} %`;
   $('back').disabled = !state.canGoBack;
+  $('bookmark').textContent = state.bookmarked ? '★' : '☆';
+  $('bookmark').setAttribute('aria-pressed', String(state.bookmarked));
+  $('bookmark').title = state.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris';
+  $('bookmark').setAttribute('aria-label', $('bookmark').title);
+  $('bookmark').disabled = !state.canBookmark;
   $('video').setAttribute('aria-pressed', String(state.videoOnly));
   $('video').disabled = !state.videoSupported;
   for (const name of ['new', 'game', 'compact']) {

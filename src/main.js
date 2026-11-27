@@ -7,10 +7,11 @@ const { createRightGesture } = require('./native-gestures');
 const { createUpdateManager } = require('./updates');
 const { createSyncManager, createFileStorage } = require('./sync');
 const { parseYoutubeVideo, watchUrl, sanitizeSyncSettings } = require('./sync-core');
+const { createBookmarkStore } = require('./bookmarks');
 
 const windows = new Map();
 const shortcuts = {};
-let updateManager, syncManager, syncWin = null, syncTargetId = null;
+let updateManager, syncManager, bookmarkStore, syncWin = null, syncTargetId = null;
 let tray, lastActive, saveTimer, quitting = false, gameMode = false, allHidden = false;
 const shellFile = path.join(__dirname, 'index.html');
 const isYoutube = url => { try { return /(^|\.)youtube\.com$/.test(new URL(url).hostname); } catch { return false; } };
@@ -57,6 +58,8 @@ function update(record) {
     ...record.state,
     url: wc.getURL() || record.state.url,
     title: wc.getTitle(),
+    bookmarked: bookmarkStore?.has(wc.getURL()) || false,
+    canBookmark: (() => { try { normalizeUrl(wc.getURL()); return true; } catch { return false; } })(),
     canGoBack: wc.navigationHistory.canGoBack(),
     youtube: isYoutube(wc.getURL()),
     videoSupported: supportsVideo(wc.getURL()),
@@ -204,6 +207,36 @@ function recover() {
 }
 function targetWindow() { return windows.get(lastActive) || windows.values().next().value; }
 function shortcutLabel(name) { return shortcuts[name] ? ` (${shortcuts[name]})` : ' (menu uniquement)'; }
+function changeBookmarks(action, record) {
+  try {
+    action();
+    for (const item of windows.values()) update(item);
+    rebuildMenu();
+  } catch (error) {
+    dialog.showMessageBox(record.win, { type: 'error', message: error.message });
+  }
+}
+function bookmarkMenu(record) {
+  const items = bookmarkStore?.list() || [];
+  return items.length ? items.map(item => ({
+    label: item.title.replace(/&/g, '&&'),
+    sublabel: item.url,
+    submenu: [
+      { label: 'Ouvrir dans cette fenêtre', enabled: Boolean(record), click: () => {
+        if (!record || record.win.isDestroyed()) return;
+        record.state.url = normalizeUrl(item.url);
+        record.view.webContents.loadURL(record.state.url).catch(() => {});
+        scheduleSave();
+      } },
+      { label: 'Ouvrir dans une nouvelle fenêtre', click: () => createWindow({ url: item.url }) },
+      { type: 'separator' },
+      { label: 'Supprimer ce favori', click: () => {
+        const target = record && !record.win.isDestroyed() ? record : targetWindow();
+        if (target) changeBookmarks(() => bookmarkStore.remove(item.url), target);
+      } },
+    ],
+  })) : [{ label: 'Aucun favori — utilise ☆ pour ajouter une page', enabled: false }];
+}
 function rebuildMenu() {
   if (!tray) return;
   tray.setToolTip(`PiP Browser${gameMode ? ' — mode jeu' : ''}`);
@@ -214,6 +247,7 @@ function rebuildMenu() {
     { label: `Afficher / masquer les commandes${shortcutLabel('compact')}`, click: () => { const r = targetWindow(); if (r && !gameMode) setCompact(r, !r.state.compact); } },
     { label: `Récupérer toutes les fenêtres${shortcutLabel('recover')}`, click: recover },
     { label: 'Synchro guilde…', click: () => openSync(targetWindow()) },
+    { label: 'Favoris', submenu: bookmarkMenu(targetWindow()) },
     { type: 'separator' },
     ...[...windows.values()].map(record => ({ label: (record.view.webContents.getTitle() || 'YouTube').slice(0, 70), click: () => {
       if (gameMode) setGame(false);
@@ -411,6 +445,12 @@ ipcMain.handle('pip:command', async (event, name, value) => {
     switch (name) {
       case 'updates': await updateManager?.act(); break;
       case 'ready': update(record); break;
+      case 'bookmark':
+        bookmarkStore.toggle(wc.getURL(), wc.getTitle());
+        for (const item of windows.values()) update(item);
+        rebuildMenu();
+        break;
+      case 'bookmarks': Menu.buildFromTemplate(bookmarkMenu(record)).popup({ window: win }); break;
       case 'navigate': record.state.url = normalizeUrl(value); wc.loadURL(record.state.url).catch(() => {}); break;
       case 'back': if (wc.navigationHistory.canGoBack()) wc.navigationHistory.goBack(); break;
       case 'reload': wc.reload(); break;
@@ -495,6 +535,7 @@ else {
   app.on('second-instance', recover);
   app.whenReady().then(() => {
     app.setAppUserModelId('fr.pipbrowser.desktop');
+    bookmarkStore = createBookmarkStore(path.join(app.getPath('userData'), 'bookmarks.json'));
     session.fromPartition('persist:browsing').setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.fromPartition('persist:browsing').setPermissionCheckHandler(() => false);
     session.fromPartition('persist:browsing').on('will-download', event => event.preventDefault());
