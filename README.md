@@ -129,3 +129,9 @@ La première version est publiée sur [GitHub Releases](https://github.com/Monsi
 - Le clic droit maintenu permet de déplacer la fenêtre Twitch. Ces gestes sont interceptés avant leur transmission au lecteur pour éviter les conflits avec ses contrôles.
 - Le lecteur remplit directement la fenêtre PiP. Le mode Studio de Twitch reste utilisable et son réglage n’est pas modifié.
 - Les correctifs de synchronisation récupérés avant cette mise à jour sont conservés.
+
+## Mise à jour 0.2.4 — Favoris
+
+- **☆ / ★** ajoute ou retire la page courante des favoris.
+- Le menu **Favoris**, dans la barre de navigation et près de l’horloge, permet d’ouvrir une page dans la fenêtre actuelle ou une nouvelle fenêtre, et de la supprimer.
+- Les favoris sont partagés entre toutes les fenêtres et conservés après fermeture de l’application.
